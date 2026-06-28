@@ -310,51 +310,57 @@ Phi-4~14B. The stub is a naive instruction-following model with no alignment; it
 fixes the worst case and makes the structural controls' effect reproducible.
 
 \subsubsection{Metrics and scoring.}
-The primary metric is the attack success rate (ASR) per (model, scenario, mode),
-reported with a Wilson 95\% score interval \cite{wilson1927ci}, which is honest at
-the small sample sizes typical of this setting. We also report the
-\emph{refusal rate} (the model declined: an alignment signal) and the
-\emph{block rate} (a control stopped the attack: a structural signal), so the two
-sources of safety are visible separately. Outcomes are first scored by a
-deterministic heuristic keyed to each scenario's success markers; we additionally
-re-score every stored response with an LLM judge and report inter-scorer
-agreement (Cohen's $\kappa$) so the heuristic is validated rather than trusted.
+The primary metric is the attack success rate (ASR) per (model, scenario, mode).
+Models are decoded greedily (temperature~0, fixed seed), so each cell's outcome
+is deterministic and we report it directly; the harness also computes a Wilson
+score interval \cite{wilson1927ci} when cells are sampled, which is the basis for
+a stochastic robustness check. Alongside ASR we report the \emph{refusal rate}
+(the model declined: an alignment signal) and the \emph{block rate} (a control
+stopped the attack: a structural signal), so the two sources of safety are
+visible separately. Outcomes are first scored by a deterministic heuristic keyed
+to each scenario's markers; we additionally re-score every stored response with an
+LLM judge and report inter-scorer agreement (Cohen's $\kappa$), so the heuristic
+is validated rather than trusted.
 
 \subsubsection{Results.}
-% The results table and heatmap are generated from the benchmark's summary.json
-% by scripts/make_figures.py once the full five-model sweep completes; the
-% preliminary table below is illustrative (stub + Llama 3.1 8B, single run).
-Table~\ref{tab:results} reports ASR by scenario and mode. The pattern we expect,
-and which the preliminary runs already show, is twofold. In \emph{vulnerable}
-mode the ASR varies markedly across models: the unaligned stub is compromised by
-every scenario, whereas an aligned model refuses some attacks but not others (for
-example, a model may refuse a blatant ``print your system prompt'' request yet
-still leak the prompt to a more oblique phrasing). In \emph{secure} mode the ASR
-collapses to zero uniformly across all models, because the structural controls
-(P2, P5, and quarantine) do not depend on the model. The gap between the two
-modes is the safety the gateway adds on top of whatever the model's alignment
-happens to provide.
+Figure~\ref{fig:heatmap} gives the attack success rate for every (model, scenario)
+cell in both modes; Table~\ref{tab:results} summarises it per model. The outcome is
+clear-cut. With the gateway on (\emph{secure}), ASR is zero for every model on every
+scenario: the structural controls (P2, P3, P5) do not depend on the model, so all
+six attack classes are closed uniformly. With guardrails off (\emph{vulnerable})
+the picture is the opposite. The unaligned stub is compromised by all six
+scenarios, while the five aligned open-source models are compromised
+\emph{inconsistently}: mean vulnerable ASR ranges from 0.17 (Llama~3.1~8B,
+Phi-4~14B) to 0.50 (Mistral~7B), and which scenarios succeed differs from model to
+model. One pattern is universal: system-prompt leakage (S5) succeeds in vulnerable
+mode on \emph{all six} models, including the best-aligned ones, because the oblique
+request slips past the alignment that refuses the blatant variant (S1); the
+gateway's output redaction closes it for every model. The gap between the two modes
+is the safety the gateway adds on top of whatever alignment a model happens to
+provide, and it is the same gap for every model.
 
 \begin{table}[t]
 \centering
-\caption{Attack success rate by scenario and mode (preliminary: stub and one
-open-source model; the full five-model table is generated from the benchmark
-output). Lower is safer.}
+\caption{Mean attack success rate (ASR) and refusal rate per model over the six
+scenarios. Secure-mode ASR is zero for every model; vulnerable-mode ASR and
+refusal vary by model. Lower ASR is safer.}
 \label{tab:results}
-\begin{tabular}{@{}lcccccc@{}}
-\toprule
- & \multicolumn{2}{c}{stub} & \multicolumn{2}{c}{Llama 3.1 8B} & \multicolumn{2}{c}{$\cdots$} \\
-Scenario & vuln & secure & vuln & secure & vuln & secure \\
-\midrule
-S1 LLM01 direct injection   & 1.00 & 0.00 & 0.00 & 0.00 & & \\
-S2 LLM01 indirect injection & 1.00 & 0.00 & 0.00 & 0.00 & & \\
-S3 LLM02/08 data leakage    & 1.00 & 0.00 & 0.00 & 0.00 & & \\
-S4 LLM06 tool abuse         & 1.00 & 0.00 & 0.00 & 0.00 & & \\
-S5 LLM07 prompt leakage     & 1.00 & 0.00 & 1.00 & 0.00 & & \\
-S6 LLM05 output handling    & 1.00 & 0.00 & 0.00 & 0.00 & & \\
-\bottomrule
-\end{tabular}
+\input{tables/results.tex}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{asr-heatmap.pdf}
+\caption{Attack success rate per scenario (rows) and model (columns), guardrails
+off (left) versus gateway on (right). The gateway drives every cell to zero
+regardless of the model; the guardrails-off panel varies by model, and S5
+(system-prompt leakage) succeeds on all of them.}
+\label{fig:heatmap}
+\end{figure}
+
+To check the heuristic scorer, an LLM judge re-scored the same stored responses and
+agreed on 63 of 72 cells (87.5\%; Cohen's $\kappa = 0.63$, substantial agreement),
+so the reported outcomes do not hinge on the heuristic alone.
 
 \section{Related Work}
 \label{sec:related}

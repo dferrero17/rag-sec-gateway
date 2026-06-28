@@ -29,6 +29,15 @@ SCENARIO_LABEL = {
     "S6": "S6 LLM05 output",
 }
 
+MODEL_LABEL = {
+    "stub": "Stub (naive)",
+    "llama31-8b": "Llama 3.1 8B",
+    "qwen25-7b": "Qwen2.5 7B",
+    "mistral-7b": "Mistral 7B",
+    "gemma3-12b": "Gemma 3 12B",
+    "phi4-14b": "Phi-4 14B",
+}
+
 
 def load_rows(summary_path: str) -> list[dict]:
     with open(summary_path, encoding="utf-8") as fh:
@@ -76,7 +85,8 @@ def write_results_table(rows, out_dir: str) -> str:
         vuln_asr = _mean([asr.get((m, s, "vulnerable")) for s in scenarios])
         sec_asr = _mean([asr.get((m, s, "secure")) for s in scenarios])
         vuln_ref = _mean([refusal.get((m, s, "vulnerable")) for s in scenarios])
-        lines.append(f"{m} & {fmt(vuln_asr)} & {fmt(sec_asr)} & {fmt(vuln_ref)} \\\\")
+        name = MODEL_LABEL.get(m, m)
+        lines.append(f"{name} & {fmt(vuln_asr)} & {fmt(sec_asr)} & {fmt(vuln_ref)} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}", ""]
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines))
@@ -103,7 +113,7 @@ def make_heatmap(rows, out_dir: str) -> str:
         data = matrix(mode)
         last_im = ax.imshow(data, cmap="viridis", vmin=0.0, vmax=1.0, aspect="auto")
         ax.set_xticks(range(len(models)))
-        ax.set_xticklabels(models, rotation=45, ha="right", fontsize=8)
+        ax.set_xticklabels([MODEL_LABEL.get(m, m) for m in models], rotation=45, ha="right", fontsize=8)
         ax.set_yticks(range(len(scenarios)))
         ax.set_yticklabels([SCENARIO_LABEL.get(s, s) for s in scenarios], fontsize=8)
         ax.set_title(title, fontsize=9)
