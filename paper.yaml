@@ -34,7 +34,7 @@ abstract: >
   generates the answer. We map these controls onto the OWASP Top 10 for LLM Applications
   and integrate the gateway with a retrieval-augmented chatbot wired to the ATT
   platform's document store and identity provider, evaluating it on a controlled
-  synthetic corpus. Across the deterministic worst case and five open-source models,
+  synthetic corpus. Across the deterministic worst case and six open-source models (7B-70B),
   attack success with the gateway on is zero for every model on all six evaluated OWASP
   classes, while the guardrails-off baseline varies from model to model. A factorial
   analysis attributes this to the structural controls rather than to a hardened prompt,

@@ -19,10 +19,11 @@ import argparse
 import json
 import os
 
-MODELS = ["stub", "llama31-8b", "qwen25-7b", "mistral-7b", "gemma3-12b", "phi4-14b"]
+MODELS = ["stub", "llama31-8b", "qwen25-7b", "mistral-7b", "gemma3-12b", "phi4-14b", "llama31-70b"]
 SCEN = ["S1", "S2", "S3", "S4", "S5", "S6"]
 MODEL_LABEL = {"stub": "Stub", "llama31-8b": "Llama 3.1 8B", "qwen25-7b": "Qwen2.5 7B",
-               "mistral-7b": "Mistral 7B", "gemma3-12b": "Gemma 3 12B", "phi4-14b": "Phi-4 14B"}
+               "mistral-7b": "Mistral 7B", "gemma3-12b": "Gemma 3 12B", "phi4-14b": "Phi-4 14B",
+               "llama31-70b": "Llama 3.1 70B"}
 SCEN_LABEL = {"S1": "S1 direct inj.", "S2": "S2 indirect inj.", "S3": "S3 data leak",
               "S4": "S4 tool abuse", "S5": "S5 prompt leak", "S6": "S6 bad output"}
 

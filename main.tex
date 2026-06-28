@@ -61,7 +61,7 @@ and two heuristic (input filtering and output redaction, as defence in depth). W
 map the controls onto the OWASP Top 10 for LLM Applications and integrate the
 gateway with a chatbot wired to the \att platform's document store and identity
 provider, evaluating it on a controlled synthetic corpus across a deterministic
-worst case and five open-source models (7--14B). With the gateway on, attack
+worst case and six open-source models (7B--70B). With the gateway on, attack
 success is zero by our rubric for every model on all six evaluated attack classes,
 while the guardrails-off baseline varies from model to model. A factorial sweep
 shows the structural controls, not a hardened prompt, close the attacks alignment
@@ -302,9 +302,9 @@ correctness of the live \att label population, which we leave to future work.
 The question is whether composing the controls yields model-independent safety,
 and how the guardrails-off baseline varies across models. We run the six scenarios
 in two modes, vulnerable (every control off, the baseline) and secure (the gateway
-on), over a deterministic stub model and five open-source instruct models served
-locally through Ollama: Llama~3.1~8B, Qwen2.5~7B, Mistral~7B, Gemma~3~12B, and
-Phi-4~14B. Decoding is greedy (temperature~0, fixed seed) so each cell is
+on), over a deterministic stub model and six open-source instruct models:
+Llama~3.1~8B, Qwen2.5~7B, Mistral~7B, Gemma~3~12B, and Phi-4~14B served locally
+through Ollama, and Llama~3.1~70B on a rented A40 GPU. Decoding is greedy (temperature~0, fixed seed) so each cell is
 deterministic and reported directly; a temperature-0.7 run later checks that the
 findings survive sampling. The stub is a naive instruction-follower with no
 refusal mechanism that echoes whatever an injection asks for, fixing the worst
@@ -320,14 +320,16 @@ With the gateway on, ASR is zero by the rubric for every model on every scenario
 because the structural controls do not depend on the model and close all six
 classes uniformly. With guardrails off the picture inverts
 (Figure~\ref{fig:heatmap}): the unaligned stub is compromised on all six
-scenarios, while the five aligned models are compromised inconsistently, with mean
+scenarios, while the six aligned models are compromised inconsistently, with mean
 vulnerable ASR ranging from $0.17$ (Llama~3.1~8B, Phi-4~14B) to $0.50$
 (Mistral~7B). The variation is attack-specific rather than a clean model ranking,
 since only data leakage (S3) and tool abuse (S4) differ across models while S1,
-S2, and S6 are handled by every aligned model. System-prompt leakage (S5) is the
-exception that proves the rule: it succeeds in vulnerable mode on all six models,
-including the best aligned, because the oblique request slips past the alignment
-that refuses the blatant variant (S1). The gap between the two modes is the safety
+S2, and S6 are handled by every aligned model. Scale does not buy safety:
+Llama~3.1~70B (mean $0.33$) leaks the restricted document on S3 where its 8B
+sibling refuses. System-prompt leakage (S5) is the exception that proves the rule:
+it succeeds in vulnerable mode on all seven models, including the largest and best
+aligned, because the oblique request slips past the alignment that refuses the
+blatant variant (S1). The gap between the two modes is the safety
 the gateway adds on top of whatever alignment a model happens to provide, and it
 is the same gap for every model.
 
@@ -418,8 +420,8 @@ ranking; the text-based tool protocol means an aligned model that declines the
 literal call syntax lowers vulnerable-mode tool-abuse success, an alignment effect
 that secure-mode validation overrides; and the output filter strips the secret but
 the model may still echo its secret-free hardened prompt, which one annotator
-counted as a partial leak. The second is scope: all models are open-source and
-7--14B served locally, with no commercial or larger models, and the evaluation is
+counted as a partial leak. The second is scope: all models are open-source,
+from 7B to 70B, with no commercial models, and the evaluation is
 single-domain on a synthetic corpus; the structural argument is model-size
 independent because P2 and P5 act by position, so this caveat concerns empirical
 coverage rather than the mechanism, but production claims would need commercial
