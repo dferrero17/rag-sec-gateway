@@ -61,12 +61,13 @@ answer. We map these controls onto the OWASP Top 10 for LLM Applications and int
 the gateway with a retrieval-augmented chatbot wired to the \att platform's
 document store and identity provider, evaluating it on a controlled synthetic
 corpus for reproducibility. Across the deterministic worst case and five
-open-source models we measure a guardrails-off baseline and the same models with
-the gateway enabled, and report per-model, per-scenario attack success rates.
-With the gateway on, attack success drops to zero uniformly across all models,
-while the guardrails-off baseline varies from model to model; model-independent
-safety thus comes from the gateway's structural controls, which hold by position
-in the pipeline, rather than from any individual model's alignment.
+open-source models, attack success with the gateway on is zero for every model on
+all six evaluated OWASP classes, while the guardrails-off baseline varies from model
+to model. A factorial analysis attributes this to the structural controls rather
+than to a hardened prompt, and the gateway neutralises attacks that two off-the-shelf
+guardrail systems (Llama Guard and NeMo Guardrails) miss. Model-independent safety
+thus comes from the gateway's structural controls, which hold by position in the
+pipeline, rather than from any individual model's alignment.
 
 \keywords{RAG security \and prompt injection \and LLM guardrails \and OWASP LLM Top-10 \and AI gateway \and open-source LLMs.}
 \end{abstract}
@@ -434,6 +435,21 @@ context quarantine and the hardened prompt, not by the output filter. Only the
 unaligned stub still emits the system-prompt header pre-redaction, where the filter
 acts as a backstop. The secure-mode zeros are therefore not a measurement artifact
 for the deployable models.
+
+\subsubsection{External baselines and stochastic robustness.}
+We compare the gateway against two off-the-shelf guardrail systems on the same six
+attacks. Llama Guard~3 \cite{inan2023llamaguard}, a content-safety classifier,
+flags none of the six attack \emph{inputs} (they read as benign) and only three of
+the six worst-case \emph{outputs} (0/6 and 3/6), missing data leakage, tool abuse,
+and prompt leakage. NeMo Guardrails' \cite{rebedea2023nemo} self-check input rail
+(backed by Llama~3.1~8B) blocks only the blatant direct injection (1/6). The
+gateway closes all six (6/6) uniformly, because these attacks are structural rather
+than content-classifiable. Finally, to confirm the
+guardrails-off baseline is not an artifact of greedy decoding, we re-ran it at
+temperature~0.7 with ten seeded samples per cell: the cross-model variation
+persists (mean vulnerable ASR $0.07$--$0.60$) and sampling surfaces, if anything,
+\emph{more} successes, while S5 stays at $1.0$ for the models that leak; secure-mode
+behaviour is unchanged, as structural blocking is deterministic.
 
 \section{Related Work}
 \label{sec:related}
