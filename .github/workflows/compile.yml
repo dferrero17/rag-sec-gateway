@@ -1,0 +1,28 @@
+name: Compile PDF
+
+on:
+  push:
+    branches: [main]
+    paths: ['**.tex', '**.bib', '**.cls', '**.bst', '**.sty', 'figures/**', '.github/workflows/compile.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile LaTeX (latexmk)
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: main.tex
+      - name: Publish PDF to the 'latest' release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest build
+          body: Always-current compiled PDF (auto-updated by CI).
+          files: main.pdf
+          fail_on_unmatched_files: true

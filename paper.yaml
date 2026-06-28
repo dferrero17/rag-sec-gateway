@@ -1,0 +1,38 @@
+slug: rag-sec-gateway
+title: "An AI-Aware Security Gateway for Retrieval-Augmented Chatbots: A Cross-Model Evaluation"
+authors:
+  - Daniel Martins Ferreira
+  - Rui Machado
+  - Henrique Teixeira
+  - Sebastião Teixeira
+  - Osvaldo Pacheco
+keywords:
+  - RAG security
+  - prompt injection
+  - LLM guardrails
+  - OWASP LLM Top-10
+  - AI gateway
+  - open-source LLMs
+  - cross-model evaluation
+target_venue:
+  - ICECCS 2026 (short paper)
+lifecycle: Ideation
+repo: dferrero17/rag-sec-gateway
+root_file: main.tex
+build: latexmk
+pdf_file: main.pdf
+pdf_url: https://github.com/dferrero17/rag-sec-gateway/releases/latest/download/main.pdf
+abstract: >
+  Retrieval-augmented generation (RAG) lets chatbots answer from an organisation's
+  own documents but widens the attack surface: untrusted retrieved content and user
+  input reach the model and its tools directly, exposing prompt injection, data
+  leakage, and tool abuse. A common defence relies on the underlying model's
+  alignment, which varies by model and is hard to audit. This paper studies an
+  AI-aware security gateway that enforces structural controls (input filtering,
+  retrieval authorisation, context quarantine, output redaction, and scoped tool use)
+  independently of the model. We harden an open-source RAG security tool into a
+  deployable gateway, integrate it with a retrieval-augmented chatbot over a real
+  tourism-services knowledge base, and evaluate it against four OWASP LLM Top-10
+  attack classes. For several open-source models we measure a guardrails-off baseline
+  and compare it with the gateway enabled, separating model alignment from
+  model-independent structural controls.

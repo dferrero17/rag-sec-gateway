@@ -1,0 +1,20 @@
+*.aux
+*.bbl
+*.blg
+*.bcf
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.run.xml
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+missfont.log
+.DS_Store
+
+# Large experiment artifacts (keep out of git; publish via releases if needed)
+results/
+data/
+models/

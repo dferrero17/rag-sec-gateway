@@ -1,0 +1,123 @@
+\documentclass[runningheads]{llncs}
+
+% ICECCS 2026 short paper (max 11 pages incl. references), Springer LNCS format.
+% https://formal-analysis.com/iceccs/2026/
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{figures/}}
+
+\begin{document}
+
+\title{An AI-Aware Security Gateway for Retrieval-Augmented Chatbots: A Cross-Model Evaluation}
+\titlerunning{An AI-Aware Security Gateway for RAG Chatbots}
+
+% TODO: confirm affiliations, ORCIDs, and per-author emails before submission.
+\author{%
+Daniel Martins Ferreira\inst{1}\and
+Rui Machado\inst{1}\and
+Henrique Teixeira\inst{1}\and
+Sebasti\~ao Teixeira\inst{1}\and
+Osvaldo Pacheco\inst{1}}
+\authorrunning{D.\,M.\,Ferreira et al.}
+
+\institute{University of Aveiro, Aveiro, Portugal\\
+\email{danielmartinsferreira@ua.pt}}
+
+\maketitle
+
+\begin{abstract}
+Retrieval-augmented generation (RAG) lets chatbots answer from an
+organisation's own documents, but it widens the attack surface: untrusted
+retrieved content and user input reach the model and its tools directly,
+exposing prompt injection, data leakage, and tool abuse. A common defence is
+to rely on the underlying model's alignment, yet that defence varies by model
+and is hard to audit. This paper studies an alternative: an AI-aware security
+gateway that enforces structural controls (input filtering, retrieval
+authorisation, context quarantine, output redaction, and scoped tool use)
+independently of the model. We harden an open-source RAG security tool into a
+deployable gateway, integrate it with a retrieval-augmented chatbot over a real
+tourism-services knowledge base, and evaluate it against four OWASP LLM Top-10
+attack classes. For each of several open-source models we measure a
+guardrails-off baseline and compare it with the gateway enabled, separating
+model alignment from model-independent structural controls.
+% TODO: add one-sentence headline result once experiments are run.
+
+\keywords{RAG security \and prompt injection \and LLM guardrails \and OWASP LLM Top-10 \and AI gateway \and open-source LLMs.}
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+% Motivation: organisations deploy RAG chatbots over private corpora; the
+% security model is immature. State the gap: alignment-based defences are
+% model-dependent and unauditable. State the contribution.
+%
+% Contributions (short-paper scope):
+%  C1. An AI-aware gateway hardened from an open-source research tool into a
+%      reusable, drop-in component ("more in-the-box").
+%  C2. A reference RAG chatbot deployed over the ATT tourism-services corpus.
+%  C3. A cross-model evaluation against four OWASP LLM Top-10 attack classes,
+%      with a guardrails-off baseline per model.
+\textbf{TODO:} write introduction (motivation, gap, contributions, paper map).
+
+\section{Background and Related Work}
+\label{sec:background}
+% RAG (Lewis et al.); prompt injection direct/indirect (Perez \& Ribeiro;
+% Greshake et al.); OWASP Top 10 for LLM Applications; existing guardrail /
+% gateway approaches and their limits. Position our model-independent,
+% structural-controls angle.
+\textbf{TODO:} background on RAG security and the OWASP LLM Top-10; related guardrail work.
+
+\section{The AI-Aware Security Gateway}
+\label{sec:gateway}
+% Describe the gateway as a Policy Enforcement Point on the RAG pipeline:
+% Input Filter -> Retrieval (authorise as user) -> Quarantine -> LLM ->
+% Output Filter -> Tools (scoped + validated). Explain the hardening from the
+% research prototype into a deployable, configurable component, and the
+% threat model (the four attack classes S1-S4).
+\textbf{TODO:} architecture figure + description of the five structural controls and the engineering work to make the tool deployable.
+
+\section{Deployment over a Tourism-Services Knowledge Base}
+\label{sec:deployment}
+% The reference RAG chatbot built on the ATT microservices platform
+% (knowledge-base service as corpus). Entitlement model (clearance levels),
+% retrieval, and where the gateway sits.
+\textbf{TODO:} chatbot design, corpus, user entitlement model, integration points.
+
+\section{Evaluation}
+\label{sec:evaluation}
+% Method: scenarios x {vulnerable, secure} x models x runs. Models: list the
+% open-source models compared (e.g. via Ollama). Baseline = guardrails off per
+% model. Metric: per-scenario attack-success score; separate model alignment
+% (vulnerable-mode refusals) from structural controls (secure mode).
+\subsection{Setup}
+\textbf{TODO:} models under test, attack scenarios, metrics, runs, hardware.
+
+\subsection{Results}
+% Table: per-model attack-success rate, vulnerable vs secure, per scenario.
+\textbf{TODO:} results table + key findings.
+
+\section{Discussion and Limitations}
+\label{sec:discussion}
+\textbf{TODO:} what the structural controls do and do not cover; threats to validity; generalisation beyond the tourism corpus.
+
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+\textbf{TODO:} conclusion and next steps.
+
+\subsubsection*{Acknowledgements.}
+% TODO: funding / project acknowledgements (ATT project, etc.).
+
+\bibliographystyle{splncs04}
+\bibliography{refs}
+
+\end{document}
