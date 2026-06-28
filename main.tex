@@ -23,7 +23,7 @@
 \usepackage[hidelinks]{hyperref}
 
 \graphicspath{{figures/}}
-\newcommand{\att}{ATT\xspace}
+\newcommand{\att}{the platform\xspace}
 % Inter-annotator agreement between the two author-annotators
 % (computed by scripts/human_kappa.py from the filled annotation workbook).
 \newcommand{\humankappa}{0.85}
@@ -59,7 +59,7 @@ applies five controls: three structural (retrieval authorisation and scoped tool
 which hold by their position in the pipeline, together with context quarantine)
 and two heuristic (input filtering and output redaction, as defence in depth). We
 map the controls onto the OWASP Top 10 for LLM Applications and integrate the
-gateway with a chatbot wired to the \att platform's document store and identity
+gateway with a chatbot wired to a live tourism platform's document store and identity
 provider, evaluating it on a controlled synthetic corpus across a deterministic
 worst case and six open-source models (7B--70B). With the gateway on, attack
 success is zero by our rubric for every model on all six evaluated attack classes,
@@ -112,7 +112,7 @@ S4 tool abuse, S5 system-prompt leakage, and S6 improper output handling. The
 paper makes three contributions: a model-independent gateway expressed as five
 controls with an explicit threat model and an OWASP mapping
 (Sections~\ref{sec:threat}--\ref{sec:owasp}); an integration of the gateway with a
-chatbot wired to the \att platform's document store and identity provider, with
+chatbot wired to a live tourism platform's document store and identity provider, with
 the controlled evaluation run on a synthetic corpus for reproducibility
 (Section~\ref{sec:deployment}); and a cross-model evaluation that contrasts the
 model-dependent guardrails-off baseline with the uniform behaviour of the
@@ -276,8 +276,8 @@ LLM10 Unbounded Consumption       & out of scope & rate limiting / cost governan
 \section{Deployment and Evaluation Corpus}
 \label{sec:deployment}
 
-We deploy the gateway in front of a chatbot on the \att platform, a
-tourism-services microservice system whose knowledge-base service exposes
+We deploy the gateway in front of a chatbot on a live tourism-services platform, a
+microservice system whose knowledge-base service exposes
 documents over a REST API and whose identity is managed by a Keycloak realm. The
 chatbot imports the gateway as a library: documents are loaded from the knowledge
 base as the RAG corpus, the caller's Keycloak realm roles are mapped to gateway
@@ -294,7 +294,7 @@ access-restricted documents together with planted poisoned documents that carry 
 injection payloads for S2, S4, and S6. The structural guarantees (P2, P5) hold
 identically on the live and synthetic corpora, since they act by position and not
 on document content; what the synthetic setting does not exercise is operational
-correctness of the live \att label population, which we leave to future work.
+correctness of the live platform's label population, which we leave to future work.
 
 \section{Evaluation}
 \label{sec:evaluation}
@@ -428,7 +428,7 @@ coverage rather than the mechanism, but production claims would need commercial
 models and semantic retrieval, which brings its own embedding-space attack surface.
 The third is future work: adaptive attackers who know the heuristic patterns,
 benign-query false-positive rates for the heuristic filters, and live operational
-metrics on \att.
+metrics on the deployment.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -444,7 +444,7 @@ hardened prompt. For an operator the message is to put the security-relevant
 decisions in an auditable layer around the model rather than in the model itself.
 
 \subsubsection*{Acknowledgements.}
-% TODO: funding / project acknowledgements (ATT project, etc.).
+% TODO: funding / project acknowledgements.
 
 \appendix
 \section{Formal semantics of the structural controls}
