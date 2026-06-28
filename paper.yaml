@@ -28,13 +28,12 @@ abstract: >
   input reach the model and its tools directly, opening the door to prompt injection,
   retrieval-time data leakage, and tool abuse. The common defence is to trust the
   underlying model's safety alignment, which varies from model to model and is hard to
-  audit. We study a model-independent alternative: an AI-aware security gateway that
-  sits on the RAG pipeline and enforces five structural controls (input filtering,
-  retrieval authorisation, context quarantine, output redaction, and scoped tool use)
-  regardless of which model generates the answer. We harden an open-source RAG security
-  tool into a reusable gateway library, deploy it in front of a retrieval-augmented
-  chatbot built over a real tourism-services knowledge base, and evaluate it against
-  four OWASP LLM Top-10 attack classes. For five open-source models we measure a
+  audit. We present an AI-aware security gateway that sits on the RAG pipeline and
+  enforces five structural controls (input filtering, retrieval authorisation, context
+  quarantine, output redaction, and scoped tool use) independently of the model that
+  generates the answer. We map these controls onto the OWASP Top 10 for LLM Applications
+  and deploy the gateway in front of a retrieval-augmented chatbot in a real production
+  environment, the ATT platform. Across five open-source models we measure a
   guardrails-off baseline and the same models with the gateway enabled, and report
   per-model, per-scenario attack success rates with confidence intervals, attributing
   residual risk to either the model's alignment or the gateway's model-independent
