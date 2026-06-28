@@ -16,7 +16,7 @@ keywords:
   - cross-model evaluation
 target_venue:
   - ICECCS 2026 (short paper)
-lifecycle: Ideation
+lifecycle: Drafting
 repo: dferrero17/rag-sec-gateway
 root_file: main.tex
 build: latexmk
