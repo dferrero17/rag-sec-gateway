@@ -14,6 +14,11 @@
 missfont.log
 .DS_Store
 
+# Python (the figure generator)
+__pycache__/
+*.pyc
+.venv/
+
 # Large experiment artifacts (keep out of git; publish via releases if needed)
 results/
 data/
