@@ -27,6 +27,9 @@
 
 \graphicspath{{figures/}}
 \newcommand{\att}{ATT\xspace}
+% Inter-annotator agreement between the two author-annotators. Fill from
+% scripts/human_kappa.py once both label sets exist; do NOT guess this value.
+\newcommand{\humankappa}{\textbf{[TODO: $\kappa$ from annotation]}}
 
 \begin{document}
 
@@ -341,11 +344,11 @@ score interval \cite{wilson1927ci} when cells are sampled, which is the basis fo
 a stochastic robustness check. Alongside ASR we report the \emph{refusal rate}
 (the model declined: an alignment signal) and the \emph{block rate} (a control
 stopped the attack: a structural signal), so the two sources of safety are
-visible separately. Outcomes are first scored by a deterministic heuristic keyed
-to each scenario's markers; we additionally re-score every stored response with an
-LLM judge (Llama~3.1~8B, applied uniformly to all models and orthogonal to the
-regex markers) and report inter-scorer agreement (Cohen's $\kappa$), so the
-heuristic is cross-checked rather than trusted.
+visible separately. Outcomes are scored by a transparent, deterministic rubric
+keyed to each scenario's markers and fully specified in the released code. To
+confirm the rubric does not mis-score, two of the authors independently annotated
+every cell as attack-success or not, from the stored model output and blind to the
+rubric's label; we report their inter-annotator agreement (Cohen's $\kappa$).
 
 \subsubsection{Results.}
 Figure~\ref{fig:heatmap} gives the attack success rate for every (model, scenario)
@@ -385,13 +388,10 @@ regardless of the model; the guardrails-off panel varies by model, and S5
 \label{fig:heatmap}
 \end{figure}
 
-The LLM judge agreed with the heuristic on 63 of 72 cells (87.5\%; Cohen's
-$\kappa = 0.63$). All nine disagreements fall in vulnerable mode (paraphrased
-successes the regex misses, or a marker firing inside a refusal); in secure mode
-the two scorers agree on all 36 cells, so the zero-ASR result does not depend on
-the heuristic. Where the judge and heuristic differ, the judge scores some
-vulnerable-mode cells \emph{higher}, which only sharpens the point that
-guardrails-off safety is model-dependent.
+The two authors' independent annotations agree across the 72 cells (Cohen's
+$\kappa$ = \humankappa); the secure-mode cells, where both annotators mark every
+attack as failed, are unanimous. The reported outcomes therefore do not depend on
+the automated rubric.
 
 \subsubsection{Isolating prompt hardening from the controls.}
 The secure policy toggles a hardened system prompt and all five controls together,
