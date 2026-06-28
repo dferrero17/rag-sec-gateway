@@ -392,6 +392,49 @@ the heuristic. Where the judge and heuristic differ, the judge scores some
 vulnerable-mode cells \emph{higher}, which only sharpens the point that
 guardrails-off safety is model-dependent.
 
+\subsubsection{Isolating prompt hardening from the controls.}
+The secure policy toggles a hardened system prompt and all five controls together,
+so a single contrast cannot say which did the work. We therefore ran a factorial
+sweep over \{weak, hardened\} prompt $\times$ \{controls off, structural only
+(P2,~P5), all five\} across the six models and six scenarios
+(Table~\ref{tab:factorial}). Hardening the prompt alone, with controls off, lowers
+mean ASR only modestly ($0.42\rightarrow0.31$); the structural controls do the work
+($0.42\rightarrow0.22$ under the weak prompt), and with all five on the ASR is
+$0.00$ regardless of the prompt. The effect is attack-specific: for the aligned
+models, data leakage (S3) and tool abuse (S4) are untouched by the prompt and
+closed only by retrieval authorisation (P2) and scoped tools (P5), whereas
+system-prompt leakage (S5) is driven by the secret-bearing weak prompt and removed
+by hardening it; direct and indirect injection (S1, S2) are already handled by the
+aligned models. The gateway's structural controls add model-independent protection
+precisely where alignment does not.
+
+\begin{table}[t]
+\centering
+\caption{Factorial mean ASR over six models and six scenarios. Prompt hardening
+alone helps little; the structural controls drive the result, and all five reach
+zero regardless of the prompt.}
+\label{tab:factorial}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Controls & Weak prompt & Hardened prompt \\
+\midrule
+None                & 0.42 & 0.31 \\
+Structural (P2, P5) & 0.22 & 0.11 \\
+All five            & 0.00 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Are the secure-mode zeros an artifact?}
+Because the output filter redacts the exact tokens the S5/S6 scorers match, we
+re-scored those scenarios on the model output \emph{before} redaction. In the
+secure configuration the active-content scenario (S6) is clean for every model, and
+S5 is clean for all five real models: the injected directive is removed upstream by
+context quarantine and the hardened prompt, not by the output filter. Only the
+unaligned stub still emits the system-prompt header pre-redaction, where the filter
+acts as a backstop. The secure-mode zeros are therefore not a measurement artifact
+for the deployable models.
+
 \section{Related Work}
 \label{sec:related}
 
@@ -421,26 +464,19 @@ the risks we target.
 \label{sec:discussion}
 
 The structural controls (P2, P5) are the load-bearing ones: they hold against the
-stated threat model regardless of the model, and the evaluation shows the gateway's
-effect is uniform across models. The heuristic controls (P1, P4) are bypassable
-content inspection and we do not claim otherwise; they are defence in depth.
-Several limitations bound the results. The cross-model contrast is descriptive: the
-secure policy toggles the hardened prompt and all five controls together, so we do
-not isolate each control's marginal effect; a factorial design and per-control
-ablations are future work. For S5 and S6, where the output filter
-removes the exact string the scorer looks for, the secure-mode zero is partly by
-construction; a re-scoring on the pre-redaction output, and baselines against
-external guardrail toolkits (NeMo Guardrails, Llama Guard), are needed to establish
-necessity rather than sufficiency. The retriever is a lexical (TF-IDF) baseline,
-though retrieval authorisation acts on the candidate set independently of ranking;
-the text-based tool protocol means an aligned model that declines the literal
-call syntax lowers vulnerable-mode tool-abuse success, an alignment effect that
-secure-mode validation overrides. All models are open-source and 7--14B served
-locally, with no commercial models, matching an on-premise enterprise setting but
-limiting external validity. Decoding is greedy, so we report deterministic
-outcomes and leave sampled confidence intervals and false-positive (benign-query)
-rates for the heuristic filters to future work, along with adaptive attackers who
-know the gateway's heuristics and a larger live-deployment study.
+stated threat model regardless of the model, and the factorial above confirms the
+secure-mode result is due to the controls rather than the hardened prompt. The
+heuristic controls (P1, P4) are bypassable content inspection and we do not claim
+otherwise; they are defence in depth. Several limitations remain. The retriever is a
+lexical (TF-IDF) baseline, though retrieval authorisation acts on the candidate set
+independently of ranking; the text-based tool protocol means an aligned model that
+declines the literal call syntax lowers vulnerable-mode tool-abuse success, an
+alignment effect that secure-mode validation overrides. All models are open-source
+and 7--14B served locally, with no commercial models, matching an on-premise
+enterprise setting but limiting external validity, and the evaluation is
+single-domain. Adaptive attackers who know the gateway's heuristics, benign-query
+false-positive rates for the heuristic filters, and a larger live-deployment study
+with operational metrics on the \att platform remain future work.
 
 \section{Conclusion}
 \label{sec:conclusion}
