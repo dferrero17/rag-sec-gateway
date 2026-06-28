@@ -20,11 +20,13 @@
 \usepackage{listings}
 \usepackage{url}
 \usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+\usepackage{xspace}
 \usepackage[hidelinks]{hyperref}
 
 \graphicspath{{figures/}}
 \newcommand{\att}{ATT\xspace}
-\usepackage{xspace}
 
 \begin{document}
 
@@ -191,6 +193,38 @@ The five controls realise properties P1--P5 in pipeline order:
   \item \textbf{Scoped tools} (P5): expose only least-privilege tools and
   validate every call's arguments against an allow-list before executing.
 \end{enumerate}
+Figure~\ref{fig:gateway} shows the controls in pipeline order.
+
+\begin{figure}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  >=Stealth, node distance=3mm,
+  box/.style={draw, minimum height=9mm, minimum width=15mm, align=center, font=\scriptsize, inner sep=2pt},
+  struct/.style={box, fill=blue!12},
+  heur/.style={box, fill=black!8},
+  model/.style={box, fill=white}]
+  \node[heur] (in) {Input\\filter\\(P1)};
+  \node[struct, right=of in] (ret) {Retrieval\\authz.\\(P2)};
+  \node[struct, right=of ret] (qua) {Quarantine\\(P3)};
+  \node[model, right=of qua] (llm) {LLM};
+  \node[heur, right=of llm] (out) {Output\\redaction\\(P4)};
+  \node[struct, right=of out] (tool) {Scoped\\tools\\(P5)};
+  \node[left=5mm of in, font=\scriptsize\itshape] (q) {query};
+  \node[right=5mm of tool, font=\scriptsize\itshape] (r) {response};
+  \draw[->] (q) -- (in);
+  \draw[->] (in) -- (ret);
+  \draw[->] (ret) -- (qua);
+  \draw[->] (qua) -- (llm);
+  \draw[->] (llm) -- (out);
+  \draw[->] (out) -- (tool);
+  \draw[->] (tool) -- (r);
+\end{tikzpicture}}
+\caption{The gateway as a Policy Enforcement Point on the RAG pipeline. Structural
+controls (blue: P2, P3, P5) hold independently of the model; heuristic controls
+(grey: P1, P4) are best-effort defence in depth.}
+\label{fig:gateway}
+\end{figure}
 
 \subsubsection{Alignment versus structure.}
 The central design claim is that P2 and P5 do not depend on the model. Retrieval
