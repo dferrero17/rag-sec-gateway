@@ -444,6 +444,50 @@ decisions in an auditable layer around the model rather than in the model itself
 \subsubsection*{Acknowledgements.}
 % TODO: funding / project acknowledgements (ATT project, etc.).
 
+\appendix
+\section{Formal semantics of the structural controls}
+\label{app:formal}
+
+We give the two load-bearing controls a semantics that makes their
+model-independence explicit. Let $U$ be users and $D$ documents, with clearances
+$\mathit{cl}:U\to 2^{C}$ and labels $\mathit{acl}:D\to C$. For a user $u$ the
+authorised set is $A(u)=\{d\in D:\mathit{acl}(d)\in\mathit{cl}(u)\}$. A model is any
+function $M$ from an input triple to a response and a set of tool calls; we quantify
+over $M$, so nothing below depends on a particular model or its alignment.
+
+On a request $(u,m)$ the secure pipeline retrieves
+$R=\mathit{topk}(m, A(u))\subseteq A(u)$, forms the context
+$X=\mathit{quarantine}(R)$, computes $(r,\mathcal{C})=M(\mathit{sys},m,X)$, releases
+$r'=\mathit{redact}(r)$, and executes
+$\mathit{Exec}=\{c\in\mathcal{C}: \mathit{name}(c)\in\mathit{allow}\wedge
+\mathit{args}(c)\in\mathit{scope}\}$.
+
+\begin{proposition}[P2, retrieval-authorisation soundness]
+For every model $M$, user $u$, and message $m$, the model input contains content
+only from documents in $A(u)$; consequently no document $d$ with
+$\mathit{acl}(d)\notin\mathit{cl}(u)$ influences the response.
+\end{proposition}
+\begin{proof}
+Retrieval restricts candidates to $A(u)$ before $M$ is invoked, so $R\subseteq
+A(u)$ and $M$'s input is a function only of $(\mathit{sys},m,\mathit{quarantine}(R))$.
+No $d\notin A(u)$ appears in that input, for any $M$. \qed
+\end{proof}
+
+\begin{proposition}[P5, tool-scope soundness]
+For every model $M$ and output $(r,\mathcal{C})$, a call $c$ is executed only if
+$\mathit{name}(c)\in\mathit{allow}$ and $\mathit{args}(c)\in\mathit{scope}$.
+\end{proposition}
+\begin{proof}
+$\mathit{Exec}$ filters $\mathcal{C}$ by the scope predicate before execution,
+independent of how $\mathcal{C}$ was produced. \qed
+\end{proof}
+
+Both guarantees hold by the position of the control in the pipeline (before and
+after $M$), which is the precise sense in which the structural controls are
+model-independent. We give no analogous guarantee for the heuristic controls P1 and
+P4, or for quarantine P3 against a model that can be swayed; these are best-effort
+and depend on content inspection an adaptive attacker may evade.
+
 \bibliographystyle{splncs04}
 \bibliography{refs}
 
