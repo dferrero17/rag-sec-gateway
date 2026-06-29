@@ -119,7 +119,7 @@ def make_dose_response(full_factorial_path, out_dir):
     fig, ax = plt.subplots(figsize=(4.6, 2.9), constrained_layout=True)
     ax.plot(ks, y_stub, "o-", color=_ORANGE, label="worst-case stub")
     ax.plot(ks, y_real, "s-", color=_BLUE, label="open models (mean)")
-    ax.set_xlabel("Number of structural/heuristic controls enabled")
+    ax.set_xlabel("Number of controls enabled")
     ax.set_ylabel("Attack success rate")
     ax.set_ylim(-0.02, 1.02)
     ax.set_xticks(ks)
