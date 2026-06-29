@@ -135,7 +135,6 @@ request calls to external tools. Both $m$ and the content of $R$ are
 attacker-influenced, so every stage downstream of retrieval is an opportunity for
 the attacker.
 
-\subsubsection{Principals and trust boundary.}
 We model the deployment with users $U$ and documents $D$. Each user $u$ holds
 clearances $\mathit{cl}(u)\subseteq C$ and each document $d$ a label
 $\mathit{acl}(d)\in C$; $u$ may read $d$ only if $\mathit{acl}(d)\in\mathit{cl}(u)$,
@@ -145,7 +144,6 @@ trusted developer artefacts. The user message $m$ and the body of every retrieve
 document are untrusted data: they may inform an answer but must never be promoted to
 instructions.
 
-\subsubsection{Attacker capabilities.}
 The attacker aims to disclose a restricted document, execute an out-of-scope action,
 exfiltrate the system prompt, or emit active content, and has two capabilities:
 (C1) it submits arbitrary user messages, including ones that try to override the
@@ -163,7 +161,6 @@ boundary, binding retrieval to $\mathit{cl}(u)$ before the deputy acts and tool
 execution to a fixed scope after it, so that a misled deputy still cannot exceed the
 authority enforced around it.
 
-\subsubsection{Assumptions.}
 The guarantees of Section~\ref{sec:properties} rest on three assumptions, stated so
 their scope is explicit. (A1) Access labels are tamper-proof and enforced by the
 document store; if labels can be forged, retrieval authorisation no longer holds.
