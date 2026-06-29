@@ -337,8 +337,9 @@ is the same gap for every model.
 \centering
 \includegraphics[width=0.85\textwidth]{asr-heatmap.pdf}
 \caption{Guardrails-off attack success rate per scenario and model; with the
-gateway on every cell is $0.0$ (omitted). Only S3, S4, and S5 vary across models;
-the rest are uniform.}
+gateway on every cell is $0.0$ (omitted). The stub is the deterministic worst case
+($1.0$ throughout). Among the six models only S3 and S4 vary; every model leaks S5,
+while S1, S2, and S6 are refused by all of them.}
 \label{fig:heatmap}
 \end{figure}
 
