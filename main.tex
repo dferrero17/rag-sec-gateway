@@ -358,7 +358,11 @@ attacks untouched: data leakage and tool abuse stay open until retrieval
 authorisation and scoped tools are added, which close them regardless of the
 prompt, whereas system-prompt leakage is closed by the hardened prompt and not by
 P2 or P5. The two levers are therefore orthogonal, and the structural controls are
-the ones that act where alignment fails. A pre-redaction re-scoring supports the
+the ones that act where alignment fails. A full $2^5$ sweep over every control
+combination isolates each control (Appendix~\ref{app:isolation}): on the worst-case
+stub, enabling one control at a time closes each attack with the control mapped to
+it, and shows that system-prompt leakage is closed only by output redaction, not by
+the input filter, since the oblique request bypasses it. A pre-redaction re-scoring supports the
 same reading: in secure mode the model's output before the filter is already clean
 for every real model on S5 and S6, so quarantine and the hardened prompt prevent
 the leak upstream and the output filter is only a backstop, relied on solely by the
@@ -489,6 +493,27 @@ after $M$), which is the precise sense in which the structural controls are
 model-independent. We give no analogous guarantee for the heuristic controls P1 and
 P4, or for quarantine P3 against a model that can be swayed; these are best-effort
 and depend on content inspection an adaptive attacker may evade.
+
+\section{Per-control isolation}
+\label{app:isolation}
+Table~\ref{tab:isolation} reduces the full $2^5$ control sweep to its
+single-control rows on the worst-case stub, where every attack succeeds with all
+controls off: it gives the attack success rate with exactly one control enabled.
+Each attack is closed by the control mapped to it, data leakage (S3) by retrieval
+authorisation (P2), tool abuse (S4) by scoped tools (P5) or quarantine (P3), the
+indirect attacks (S2, S6) by quarantine (P3), and direct injection (S1) by the
+input filter (P1) or output redaction (P4). System-prompt leakage (S5) is closed
+only by output redaction (P4): the oblique request bypasses the input filter, so
+input filtering alone would miss it.
+
+\begin{table}[t]
+\centering
+\caption{Per-control isolation: attack success rate with exactly one control
+enabled, on the worst-case stub (weak prompt). Bold marks the control(s) that close
+each attack.}
+\label{tab:isolation}
+\input{tables/control_isolation.tex}
+\end{table}
 
 \bibliographystyle{splncs04}
 \bibliography{refs}
