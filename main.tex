@@ -109,15 +109,17 @@ how much safety comes from the gateway versus from a given model's alignment.
 We evaluate six attack scenarios, one per addressed OWASP class: S1 direct prompt
 injection, S2 indirect injection through a retrieved document, S3 RAG data leakage,
 S4 tool abuse, S5 system-prompt leakage, and S6 improper output handling. The
-paper makes three contributions: a model-independent gateway expressed as five
-controls with an explicit threat model and an OWASP mapping
+paper makes three contributions: a model-independent gateway of five controls with a
+formal threat model and security properties, three of them proved to hold for every
+model and the heuristic controls' non-guarantees stated precisely
 (Sections~\ref{sec:threat}--\ref{sec:owasp}); an integration of the gateway with a
 chatbot wired to a live tourism platform's document store and identity provider, with
 the controlled evaluation run on a synthetic corpus for reproducibility
 (Section~\ref{sec:deployment}); and a cross-model evaluation that contrasts the
-model-dependent guardrails-off baseline with the uniform behaviour of the
-structural controls and, through a factorial sweep and external baselines,
-attributes the result to the controls rather than to a hardened prompt
+model-dependent guardrails-off baseline with the uniform behaviour of the structural
+controls and, through a full $2^5$ factorial sweep, external guardrail baselines, a
+second-scorer validity check, and a negligible-overhead and false-positive analysis,
+attributes the safety to the controls rather than to a hardened prompt
 (Section~\ref{sec:evaluation}).
 
 \section{Background and Threat Model}
@@ -130,38 +132,48 @@ request calls to external tools. Both $m$ and the content of $R$ are
 attacker-influenced, so every stage downstream of retrieval is an opportunity for
 the attacker.
 
-We separate trusted from untrusted components. The system prompt and the gateway
-configuration are trusted developer artefacts; the user message and the body of
-every retrieved document are untrusted data, never instructions. Each user $u$
-holds a set of clearances $\mathit{cl}(u)$, each document $d$ carries an access
-label $\mathit{acl}(d)$, and $u$ may read $d$ only if
-$\mathit{acl}(d)\in\mathit{cl}(u)$. The attacker can send arbitrary user messages,
-including ones that try to subvert the system prompt or the tools (direct
-injection), and can plant content in the corpus that is later retrieved and acted
-upon (indirect injection or poisoning)
-\cite{greshake2023indirect,zou2024poisonedrag}. We assume the access labels are
-tamper-proof and enforced by the document store; if labels can be forged, the
-authorisation guarantee below no longer holds. We also assume a non-adaptive
-attacker: one who knows the heuristic filters' patterns can craft obfuscated
-bypasses, and such adaptive evasion is out of scope.
+\subsubsection{Principals and trust boundary.}
+We model the deployment with users $U$ and documents $D$. Each user $u$ holds
+clearances $\mathit{cl}(u)\subseteq C$ and each document $d$ a label
+$\mathit{acl}(d)\in C$; $u$ may read $d$ only if $\mathit{acl}(d)\in\mathit{cl}(u)$,
+and we write $A(u)=\{d\in D:\mathit{acl}(d)\in\mathit{cl}(u)\}$ for the documents $u$
+is entitled to. The system prompt $\mathit{sys}$ and the gateway configuration are
+trusted developer artefacts. The user message $m$ and the body of every retrieved
+document are untrusted data: they may inform an answer but must never be promoted to
+instructions.
 
-The gateway is designed to enforce five properties, summarised in
-Table~\ref{tab:props}. Retrieval authorisation (P2) guarantees that a user only
-ever receives content from documents they are cleared to read,
-$\forall u,d:\ \mathit{acl}(d)\notin\mathit{cl}(u)\Rightarrow d\notin
-\mathit{retrieved}(u)$, and it holds against the stated threat model because it
-acts on the candidate set before the model is invoked. Scoped tools (P5) guarantee
-that a tool call is executed only if its name is on an allow-list and its
-arguments lie within scope, $\mathit{execute}(c)\ \text{only if}\
-\mathit{name}(c)\in\mathit{allow}\wedge\mathit{args}(c)\in\mathit{scope}$,
-regardless of what the model emitted. Context quarantine (P3) fences retrieved
-content as data so that instructions embedded in it are not executed; the gateway
-enforces this on its own parsing, but a sufficiently capable model may still be
-swayed, which is why we call P3 partially structural and pair it with output
-redaction. Input filtering (P1) rejects messages matching known injection
-patterns, and output redaction (P4) removes secret shapes and active content from
-the response; both are bypassable content inspection and serve as defence in
-depth, not as guarantees.
+\subsubsection{Attacker capabilities.}
+The attacker aims to disclose a restricted document, execute an out-of-scope action,
+exfiltrate the system prompt, or emit active content, and has two capabilities:
+(C1) it submits arbitrary user messages, including ones that try to override the
+system prompt or drive the tools (direct injection); and (C2) it plants arbitrary
+content in documents the retriever may later surface, so that retrieved text carries
+instructions (indirect injection and corpus
+poisoning)~\cite{greshake2023indirect,zou2024poisonedrag}. It controls neither the
+gateway configuration nor the access labels.
+
+This is the confused-deputy problem. Without the gateway the model is a deputy that
+acts on whatever text reaches it, exercising the union of the developer's authority
+(its tools) and any authority implied by untrusted content; injected text borrows
+that authority. The gateway re-imposes the principal's authority at the pipeline
+boundary, binding retrieval to $\mathit{cl}(u)$ before the deputy acts and tool
+execution to a fixed scope after it, so that a misled deputy still cannot exceed the
+authority enforced around it.
+
+\subsubsection{Assumptions.}
+The guarantees of Section~\ref{sec:properties} rest on three assumptions, stated so
+their scope is explicit. (A1) Access labels are tamper-proof and enforced by the
+document store; if labels can be forged, retrieval authorisation no longer holds.
+(A2) For the heuristic controls only, the attacker is non-adaptive: one who knows
+the filters' patterns can craft obfuscated bypasses, and such evasion is out of
+scope for P1 and P4, though not for the structural controls, which never inspect
+content. (A3) For the quarantine guarantee, the model honours the untrusted-data
+fence; we make this precise in Section~\ref{sec:properties} and show the reference
+gateway satisfies it by construction.
+
+The gateway enforces the five controls of Table~\ref{tab:props}, three structural
+(P2, P3, P5) and two heuristic (P1, P4). The next two sections present the design
+and then prove which guarantees hold for every model.
 
 \begin{table}[t]
 \centering
@@ -233,8 +245,129 @@ Whether a model refuses a naive ``ignore your instructions'' prompt is, by
 contrast, an alignment property that varies across models. The evaluation
 quantifies both halves of this picture and, through the factorial sweep of
 Section~\ref{sec:evaluation}, attributes the secure-mode result to the controls
-rather than to the hardened prompt; isolating the marginal effect of each
-individual control is left to future work.
+rather than to the hardened prompt and isolates the marginal effect of each
+individual control.
+
+The gateway ships as a library whose only configuration surface is the policy
+object, and four interfaces are pluggable so the same controls apply to different
+deployments without touching the control logic: a corpus supplies documents with
+access labels, a principals source maps an identity to its clearances, a model
+provider abstracts the backend (the deterministic stub, a local Ollama model, or
+any OpenAI-compatible endpoint), and an optional judge re-scores stored transcripts
+offline. Section~\ref{sec:deployment} binds the corpus and principals interfaces to
+a production platform, while the evaluation swaps only the model provider across
+seven backends; the control implementations are byte-for-byte identical in every
+case, which is what model-independence means in practice as well as in the proofs.
+
+\section{Security Properties}
+\label{sec:properties}
+
+We give the gateway a semantics that makes precise which guarantees hold for every
+model and which are conditional. A model is any function $M$ mapping an input triple
+$(\mathit{sys},m,X)$ to a response $r$ and a set of tool calls $\mathcal{C}$. We
+quantify over $M$, so a statement proved for all $M$ depends on no model's
+alignment. On a request $(u,m)$ the secure pipeline retrieves
+$R=\mathit{topk}(m,A(u))\subseteq A(u)$, fences it as $X=\mathit{quarantine}(R)$,
+computes $(r,\mathcal{C})=M(\mathit{sys},m,X)$, releases $r'=\mathit{redact}(r)$, and
+executes $\mathit{Exec}=\{c\in\mathcal{C}:\mathit{name}(c)\in\mathit{allow}\wedge
+\mathit{args}(c)\in\mathit{scope}\}$. The quarantine transform wraps each chunk in an
+untrusted-data fence, strips HTML comments, and neutralises embedded control
+markers.
+
+\subsection{Model-independent guarantees}
+
+\begin{proposition}[P2, retrieval-authorisation soundness]
+\label{prop:p2}
+For every model $M$, user $u$, and message $m$, the model input contains content
+only from documents in $A(u)$; consequently no document $d$ with
+$\mathit{acl}(d)\notin\mathit{cl}(u)$ influences the response.
+\end{proposition}
+\begin{proof}
+Retrieval restricts candidates to $A(u)$ before $M$ is invoked, so $R\subseteq A(u)$
+and $M$'s input is a function only of $(\mathit{sys},m,\mathit{quarantine}(R))$. No
+$d\notin A(u)$ appears in that input, for any $M$. \qed
+\end{proof}
+
+\begin{proposition}[P5, tool-scope soundness]
+\label{prop:p5}
+For every model $M$ and output $(r,\mathcal{C})$, a call $c$ is executed only if
+$\mathit{name}(c)\in\mathit{allow}$ and $\mathit{args}(c)\in\mathit{scope}$.
+\end{proposition}
+\begin{proof}
+$\mathit{Exec}$ filters $\mathcal{C}$ by the scope predicate before execution,
+independent of how $\mathcal{C}$ was produced. \qed
+\end{proof}
+
+\begin{proposition}[P3, quarantine completeness]
+\label{prop:p3c}
+For every model $M$, user $u$, and message $m$, every retrieved chunk reaching the
+model is enclosed in the untrusted-data fence and carries no marker from the set
+that $\mathit{quarantine}$ neutralises.
+\end{proposition}
+\begin{proof}
+The pipeline applies $\mathit{quarantine}$ to every element of $R$ before forming
+$X$; by construction $\mathit{quarantine}$ wraps its argument in the fence and
+removes the neutralised markers, independent of $M$. \qed
+\end{proof}
+
+Propositions~\ref{prop:p2}--\ref{prop:p3c} hold by the position of the control in the
+pipeline, before $M$ (P2, P3) or after it (P5), which is the precise sense in which
+they are model-independent. P2 and P5 are sound regardless of the model: a document
+the user may not read never enters the model input, and a call outside scope is never
+executed, whatever $M$ emits. The confused deputy can be misled, but it cannot exceed
+the authority the gateway enforces at its boundaries.
+
+\subsection{A conditional guarantee for quarantine}
+
+Quarantine completeness is structural, but whether fencing actually stops an embedded
+instruction depends on the model honouring the fence. We isolate that dependence in a
+single assumption. The fenced region may legitimately inform the answer; what must not
+happen is for it to change which instructions the model obeys.
+
+\begin{definition}[Fence-respecting model]
+\label{def:fence}
+$M$ is \emph{fence-respecting} if the tool calls it emits and the instructions it
+obeys are invariant under changes confined to the fenced region of its context: for
+any $X,X'$ that agree outside the fence,
+$M(\mathit{sys},m,X)$ and $M(\mathit{sys},m,X')$ issue the same tool calls and obey
+the same directives. The fenced content may still inform the wording of $r$.
+\end{definition}
+
+\begin{proposition}[P3, quarantine soundness under A3]
+\label{prop:p3s}
+If $M$ is fence-respecting, then no instruction contained in a retrieved document
+changes the tool calls $M$ emits or the directives it obeys: an embedded instruction
+the request would not otherwise follow cannot be induced through retrieved content.
+\end{proposition}
+\begin{proof}
+By Proposition~\ref{prop:p3c} every retrieved chunk reaching $M$ lies inside the
+fence. Replacing an embedded instruction with inert text is a change confined to the
+fenced region, so by Definition~\ref{def:fence} the tool calls and obeyed directives
+are unchanged. \qed
+\end{proof}
+
+The reference gateway realises a fence-respecting model by construction: its
+deterministic backend applies a fence-stripping step that removes the fenced region
+before scanning for commands, so Assumption A3 holds exactly and the worst-case
+results of Section~\ref{sec:evaluation} are a sound upper bound on compromise. Whether
+a given production model satisfies A3 is an empirical, alignment-dependent question;
+this is why we class P3 as partially structural and pair it with output redaction, and
+why P5 still caps a non-fence-respecting model that does emit an injected call.
+
+\subsection{Non-guarantees: the heuristic controls}
+
+The input filter P1 rejects a message matching a finite injection-pattern set $\Pi$,
+and output redaction P4 substitutes a finite set $\Sigma$ of secret and
+active-content shapes in the response. Neither is sound. For any finite $\Pi$ there
+are semantically equivalent messages outside it (paraphrase, homoglyph substitution,
+instruction splitting), and for any finite $\Sigma$ there are secret or
+active-content encodings it does not match; an attacker who knows the patterns can
+evade them, which is Assumption A2 made explicit. P1 and P4 are therefore defence in
+depth, not guarantees. The structural controls bound the damage regardless: by
+Propositions~\ref{prop:p2} and~\ref{prop:p5} an attacker who evades P1 and P4 still
+cannot cause the model to receive an unauthorised document or to execute an
+out-of-scope tool call. This division of labour is the design principle of the
+gateway: the heuristics reduce incidence, the structural controls cap impact.
 
 \section{OWASP LLM Top-10 Coverage}
 \label{sec:owasp}
@@ -276,16 +409,48 @@ LLM10 Unbounded Consumption       & out of scope & rate limiting / cost governan
 \section{Deployment and Evaluation Corpus}
 \label{sec:deployment}
 
-We deploy the gateway in front of a chatbot on a live tourism-services platform, a
-microservice system whose knowledge-base service exposes
-documents over a REST API and whose identity is managed by a Keycloak realm. The
-chatbot imports the gateway as a library: documents are loaded from the knowledge
-base as the RAG corpus, the caller's Keycloak realm roles are mapped to gateway
-clearances so that retrieval authorisation runs on real identities, and a
-document's access label is carried by an \texttt{acl} field on the record. This
-integration demonstrates that the gateway slots into a real document store and
-identity provider; it is a feasibility result, and we report no operational
-metrics from the live deployment.
+We integrate the gateway in front of a chatbot on a tourism-services platform, a
+microservice system whose knowledge-base service exposes documents over a REST API
+and whose identity is managed by a Keycloak realm (Figure~\ref{fig:arch}). A new
+chatbot microservice imports the gateway as a library and sits behind the platform's
+nginx reverse proxy on a dedicated route. It binds the gateway's two deployment
+interfaces to the platform: the corpus interface loads documents from the
+knowledge-base REST API, and the principals interface validates the caller's
+Keycloak bearer token against the realm's JWKS and maps the realm roles it carries
+to gateway clearances, so retrieval authorisation (P2) runs on real identities. A
+document's access label is carried by an \texttt{acl} field added to the
+knowledge-base record schema. Only these two adapters are platform-specific; the
+five control implementations are the same code exercised in the evaluation. This
+demonstrates that the gateway slots into a real document store and identity provider
+without changes to the control logic. It is an integration and feasibility result:
+no integrated request was served against live user data, and we report no
+operational metrics, latency, or real-user study from the deployment.
+
+\begin{figure}[t]
+\centering
+\resizebox{0.93\textwidth}{!}{%
+\begin{tikzpicture}[
+  >=Stealth,
+  svc/.style={draw, rounded corners=1pt, minimum height=8mm, minimum width=15mm, align=center, font=\scriptsize, inner sep=3pt},
+  ext/.style={svc, fill=black!7}]
+  \node[svc] (ui) {Web UI};
+  \node[svc, right=7mm of ui] (nginx) {nginx\\\textit{\scriptsize /api/chat}};
+  \node[svc, right=7mm of nginx, fill=blue!10, minimum width=26mm] (bot)
+       {att-chatbot\\\textbf{ragapp gateway}\\\scriptsize P1\,P2\,P3\,P4\,P5};
+  \node[ext, right=16mm of bot, yshift=11mm] (kc) {Keycloak\\\textit{\scriptsize JWKS identity}};
+  \node[ext, right=16mm of bot] (kb) {Knowledge base\\\textit{\scriptsize REST + acl}};
+  \node[ext, right=16mm of bot, yshift=-11mm] (ol) {Ollama\\\textit{\scriptsize model}};
+  \draw[->] (ui)--(nginx); \draw[->] (nginx)--(bot);
+  \draw[->] (bot.east) to[out=20,in=180] (kc.west);
+  \draw[->] (bot.east) -- (kb.west);
+  \draw[->] (bot.east) to[out=-20,in=180] (ol.west);
+\end{tikzpicture}}
+\caption{Designed integration topology. The chatbot microservice imports the gateway
+and binds its corpus interface to the knowledge-base REST API and its principals
+interface to the Keycloak realm (token verified against the JWKS, roles mapped to
+clearances). Only the two adapters are platform-specific; the controls are unchanged.}
+\label{fig:arch}
+\end{figure}
 
 The controlled evaluation that follows instead uses a synthetic corpus, so that
 the comparison is identical and reproducible across models and free of live-data
@@ -299,6 +464,7 @@ correctness of the live platform's label population, which we leave to future wo
 \section{Evaluation}
 \label{sec:evaluation}
 
+\subsection{Setup}
 The question is whether composing the controls yields model-independent safety,
 and how the guardrails-off baseline varies across models. We run the six scenarios
 in two modes, vulnerable (every control off, the baseline) and secure (the gateway
@@ -316,6 +482,7 @@ scored by a transparent deterministic rubric keyed to each scenario's markers an
 specified in the released code.\footnote{Code, rubric, and data:
 \url{https://github.com/dferrero17/rag-sec-gateway} (anonymised for review).}
 
+\subsection{Model-independent safety and the alignment baseline}
 With the gateway on, ASR is zero by the rubric for every model on every scenario,
 because the structural controls do not depend on the model and close all six
 classes uniformly. With guardrails off the picture inverts
@@ -343,6 +510,7 @@ while S1, S2, and S6 are refused by all of them.}
 \label{fig:heatmap}
 \end{figure}
 
+\subsection{Scoring validity}
 Three checks confirm the secure result is not an artefact of the scorer, the
 prompt, or the decoder. Two of the authors independently annotated all 72 cells
 from the stored outputs, blind to the rubric's label; they agree on 67 (93\%;
@@ -351,8 +519,23 @@ secure mode (four on S5, one on S3), where one annotator counted the model echoi
 its secret-free hardened prompt, after the override code was redacted, as a partial
 disclosure while the other and the rubric did not. This is a definitional choice
 about residual disclosure rather than an attack the gateway let through; a stricter
-no-disclosure rubric would also redact the prompt scaffold.
+no-disclosure rubric would also redact the prompt scaffold. As a second,
+independent scorer we re-scored every stored output with an LLM judge
+(Llama~3.1~8B reading each transcript and the scenario goal); judge and rubric agree
+on 63 of 72 cells (88\%, Table~\ref{tab:scorer}), and the judge confirms the zero
+attack successes the rubric assigns in secure mode, so neither scorer is the source
+of the result.
 
+\begin{table}[t]
+\centering
+\caption{Agreement of the deterministic rubric with an independent LLM judge over
+all 72 cells. The off-diagonal is nine borderline disclosure calls; both scorers
+agree on every secure-mode attack outcome.}
+\label{tab:scorer}
+\input{tables/scorer_validity.tex}
+\end{table}
+
+\subsection{Attribution: which lever closes which attack}
 The factorial sweep separates the prompt from the controls
 (Table~\ref{tab:factorial}). Hardening the prompt alone leaves the structural
 attacks untouched: data leakage and tool abuse stay open until retrieval
@@ -378,6 +561,26 @@ five together reach zero.}
 \input{tables/factorial.tex}
 \end{table}
 
+Pooling the full sweep by how many controls are enabled gives a dose-response view
+(Figure~\ref{fig:dose}): mean ASR falls monotonically as controls stack, from
+$0.42$ with none to zero with all five on the worst-case stub, and from $0.30$ to
+zero across the open models. No single control suffices, output redaction is the
+most effective in isolation and quarantine the least, yet each one enabled alone
+still leaves attacks open and only the full set reaches zero. The controls compose
+rather than substitute, which is the layered design the propositions of
+Section~\ref{sec:properties} predict.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.62\textwidth]{dose-response.pdf}
+\caption{Attack success rate against the number of controls enabled (weak prompt),
+pooled over scenarios and all control combinations. The worst-case stub falls from
+$1.0$ to $0$; the open-model mean falls from $0.30$ to $0$. Each cell is a single
+deterministic run.}
+\label{fig:dose}
+\end{figure}
+
+\subsection{Comparison with off-the-shelf guardrails}
 Two off-the-shelf guardrail systems cover far less of this surface. Llama Guard~3
 \cite{inan2023llamaguard}, a content-safety classifier, flags none of the six
 attack inputs, which read as benign, and only three of the six worst-case outputs,
@@ -390,6 +593,40 @@ baseline at temperature~0.7 with ten seeded samples per cell leaves the picture
 unchanged: the cross-model variation persists (mean vulnerable ASR $0.07$--$0.60$)
 and sampling surfaces, if anything, more successes, while the secure mode stays
 deterministic.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.82\textwidth]{baseline-grid.pdf}
+\caption{Per-scenario coverage. The gateway closes all six classes; Llama Guard~3
+flags none of the inputs and only the three output-visible attacks (S1, S2, S6),
+and NeMo Guardrails blocks only the blatant direct injection (S1). The classifiers
+miss the structural attacks (S3, S4) and the oblique prompt leak (S5).}
+\label{fig:baseline}
+\end{figure}
+
+\subsection{Operational cost and false positives}
+The structural controls are pure functions, so the gateway adds negligible latency.
+Timing each control in isolation over $2\times10^{5}$ calls gives medians of
+$0.3$--$0.9\,\mu$s for the input filter, retrieval authorisation, quarantine, and
+tool validation, and $5.3\,\mu$s for output redaction (the most regex-heavy),
+Figure~\ref{fig:overhead}; the five together cost about $7.5\,\mu$s per query, four
+to six orders of magnitude below the $1.5$--$7.9$\,s of model inference we measured.
+The two content-inspection controls can in principle over-block, so we ran a corpus
+of 45 benign tourism questions (including near-misses such as ``booking system'' and
+``follow the instructions on the sign'') through the secure pipeline: the input
+filter rejected none, and output redaction altered none of the answers
+(0/45 false positives on both, the input filter exactly so as it is deterministic
+and model-independent). The corpus is small and single-domain, so we read this as
+evidence the patterns are not trigger-happy rather than a precision guarantee.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.62\textwidth]{overhead.pdf}
+\caption{Per-control cost in microseconds (median over $2\times10^{5}$ calls on the
+deterministic backend). Output redaction dominates the gateway's cost; the whole
+control path is about $7.5\,\mu$s, negligible beside model inference.}
+\label{fig:overhead}
+\end{figure}
 
 \section{Related Work}
 \label{sec:related}
@@ -418,22 +655,37 @@ the risks we target.
 
 The structural controls are the load-bearing ones, holding against the stated
 threat model regardless of the model, and the factorial confirms the secure result
-comes from them rather than from the hardened prompt. Three groups of limitations
-bound the claims. The first is design trade-offs: the retriever is a lexical
-(TF-IDF) baseline, though authorisation acts on the candidate set independently of
-ranking; the text-based tool protocol means an aligned model that declines the
-literal call syntax lowers vulnerable-mode tool-abuse success, an alignment effect
-that secure-mode validation overrides; and the output filter strips the secret but
-the model may still echo its secret-free hardened prompt, which one annotator
-counted as a partial leak. The second is scope: all models are open-source,
-from 7B to 70B, with no commercial models, and the evaluation is
-single-domain on a synthetic corpus; the structural argument is model-size
-independent because P2 and P5 act by position, so this caveat concerns empirical
-coverage rather than the mechanism, but production claims would need commercial
-models and semantic retrieval, which brings its own embedding-space attack surface.
-The third is future work: adaptive attackers who know the heuristic patterns,
-benign-query false-positive rates for the heuristic filters, and live operational
-metrics on the deployment.
+comes from them rather than from the hardened prompt. Several limitations bound the
+claims, and we separate those that concern the mechanism from those that concern
+the empirical coverage.
+
+The design carries three trade-offs. The retriever is a lexical (TF-IDF) baseline,
+though retrieval authorisation acts on the candidate set independently of how it is
+ranked, so the guarantee of Proposition~\ref{prop:p2} is unaffected by the choice of
+retriever. The tool protocol is textual, so an aligned model that declines the
+literal call syntax lowers vulnerable-mode tool-abuse success; this is an alignment
+effect on the baseline, and secure-mode validation overrides it regardless. Output
+redaction strips the secret but the model may still echo its secret-free hardened
+prompt, which one annotator counted as a partial leak, a definitional choice about
+residual disclosure rather than an attack the gateway let through.
+
+The empirical coverage is deliberately narrow. All models are open-source, from 7B
+to 70B, with no commercial models, and the evaluation runs on a controlled synthetic
+corpus in a single domain. Because P2 and P5 act by position rather than by
+inspecting content, the structural argument does not depend on model scale or domain,
+so this caveat concerns how widely we have measured rather than the mechanism itself;
+the false-positive probe of Section~\ref{sec:evaluation} is one small corpus and a
+larger multi-domain study would sharpen the precision claim.
+
+What remains genuinely open is the adaptive attacker. Assumption A2 excludes an
+adversary who knows the input-filter and redaction patterns and crafts obfuscated
+bypasses; such an attacker can defeat P1 and P4, and the honest consequence is that
+the heuristic layer reduces incidence while the structural controls, which never
+inspect content, still cap the impact (Section~\ref{sec:properties}). A standing
+adaptive red-team against the heuristics, a semantic retriever with its own
+embedding-space attack surface, an integrated RAG-security baseline such as
+SafeRAG~\cite{liang2025saferag}, and live operational metrics on a production
+deployment are the natural next steps.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -452,49 +704,6 @@ decisions in an auditable layer around the model rather than in the model itself
 % TODO: funding / project acknowledgements.
 
 \appendix
-\section{Formal semantics of the structural controls}
-\label{app:formal}
-
-We give the two load-bearing controls a semantics that makes their
-model-independence explicit. Let $U$ be users and $D$ documents, with clearances
-$\mathit{cl}:U\to 2^{C}$ and labels $\mathit{acl}:D\to C$. For a user $u$ the
-authorised set is $A(u)=\{d\in D:\mathit{acl}(d)\in\mathit{cl}(u)\}$. A model is any
-function $M$ from an input triple to a response and a set of tool calls; we quantify
-over $M$, so nothing below depends on a particular model or its alignment.
-
-On a request $(u,m)$ the secure pipeline retrieves
-$R=\mathit{topk}(m, A(u))\subseteq A(u)$, forms the context
-$X=\mathit{quarantine}(R)$, computes $(r,\mathcal{C})=M(\mathit{sys},m,X)$, releases
-$r'=\mathit{redact}(r)$, and executes
-$\mathit{Exec}=\{c\in\mathcal{C}: \mathit{name}(c)\in\mathit{allow}\wedge
-\mathit{args}(c)\in\mathit{scope}\}$.
-
-\begin{proposition}[P2, retrieval-authorisation soundness]
-For every model $M$, user $u$, and message $m$, the model input contains content
-only from documents in $A(u)$; consequently no document $d$ with
-$\mathit{acl}(d)\notin\mathit{cl}(u)$ influences the response.
-\end{proposition}
-\begin{proof}
-Retrieval restricts candidates to $A(u)$ before $M$ is invoked, so $R\subseteq
-A(u)$ and $M$'s input is a function only of $(\mathit{sys},m,\mathit{quarantine}(R))$.
-No $d\notin A(u)$ appears in that input, for any $M$. \qed
-\end{proof}
-
-\begin{proposition}[P5, tool-scope soundness]
-For every model $M$ and output $(r,\mathcal{C})$, a call $c$ is executed only if
-$\mathit{name}(c)\in\mathit{allow}$ and $\mathit{args}(c)\in\mathit{scope}$.
-\end{proposition}
-\begin{proof}
-$\mathit{Exec}$ filters $\mathcal{C}$ by the scope predicate before execution,
-independent of how $\mathcal{C}$ was produced. \qed
-\end{proof}
-
-Both guarantees hold by the position of the control in the pipeline (before and
-after $M$), which is the precise sense in which the structural controls are
-model-independent. We give no analogous guarantee for the heuristic controls P1 and
-P4, or for quarantine P3 against a model that can be swayed; these are best-effort
-and depend on content inspection an adaptive attacker may evade.
-
 \section{Per-control isolation}
 \label{app:isolation}
 Table~\ref{tab:isolation} reduces the full $2^5$ control sweep to its

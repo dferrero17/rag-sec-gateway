@@ -85,15 +85,176 @@ def write_factorial_table(factorial_path, out_dir):
     return path
 
 
+# Okabe-Ito colourblind-safe palette (used only where colour encodes a series).
+_BLUE, _ORANGE, _GREY = "#0072B2", "#E69F00", "#BBBBBB"
+CONTROLS5 = ["check_injection", "enforce_authorization", "quarantine_context",
+             "filter_output", "validate_tools"]
+
+
+def make_dose_response(full_factorial_path, out_dir):
+    """ASR vs number of controls enabled (weak prompt), worst-case stub and the
+    mean over the open models. Pooled over scenarios and control combinations."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from collections import defaultdict
+
+    recs = [json.loads(l) for l in open(full_factorial_path) if l.strip()]
+
+    def curve(pred):
+        by_k = defaultdict(list)
+        for r in recs:
+            if r["prompt"] != "weak" or not pred(r):
+                continue
+            k = sum(1 for c in CONTROLS5 if r[c])
+            by_k[k].append(1 if r["asr"] else 0)
+        ks = sorted(by_k)
+        return ks, [sum(by_k[k]) / len(by_k[k]) for k in ks]
+
+    ks, y_stub = curve(lambda r: r["model"] == "stub")
+    _, y_real = curve(lambda r: r["model"] != "stub")
+
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, "dose-response.pdf")
+    fig, ax = plt.subplots(figsize=(4.6, 2.9), constrained_layout=True)
+    ax.plot(ks, y_stub, "o-", color=_ORANGE, label="worst-case stub")
+    ax.plot(ks, y_real, "s-", color=_BLUE, label="open models (mean)")
+    ax.set_xlabel("Number of structural/heuristic controls enabled")
+    ax.set_ylabel("Attack success rate")
+    ax.set_ylim(-0.02, 1.02)
+    ax.set_xticks(ks)
+    ax.grid(axis="y", color="0.9", linewidth=0.6)
+    ax.set_axisbelow(True)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    ax.legend(frameon=False, fontsize=8)
+    fig.savefig(path)
+    plt.close(fig)
+    return path
+
+
+def make_overhead(overhead_path, out_dir):
+    """Per-control cost in microseconds (median over many calls), to show the
+    gateway's control path is negligible next to model inference (seconds)."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    recs = [json.loads(l) for l in open(overhead_path) if l.strip()]
+    fn = next(r for r in recs if r.get("config") == "per_control_us")
+    rows = [("P1 input filter", "P1_check_injection_us"),
+            ("P2 retrieval authz.", "P2_authorize_us"),
+            ("P3 quarantine", "P3_quarantine_us"),
+            ("P4 output redaction", "P4_output_filter_us"),
+            ("P5 scoped tools", "P5_validate_tools_us")]
+    labels = [r[0] for r in rows]
+    vals = [fn[r[1]] for r in rows]
+
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, "overhead.pdf")
+    fig, ax = plt.subplots(figsize=(4.6, 2.6), constrained_layout=True)
+    y = range(len(labels))
+    ax.barh(list(y), vals, color=_BLUE, height=0.62)
+    ax.set_yticks(list(y))
+    ax.set_yticklabels(labels, fontsize=8)
+    ax.invert_yaxis()
+    ax.set_xlabel(r"Median cost per query ($\mu$s)")
+    for i, v in enumerate(vals):
+        ax.text(v + 0.08, i, f"{v:.2f}", va="center", fontsize=7.5)
+    ax.set_xlim(0, max(vals) * 1.18)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    fig.savefig(path)
+    plt.close(fig)
+    return path
+
+
+def make_baseline_grid(llamaguard_path, nemo_path, out_dir):
+    """Per-scenario coverage of the gateway vs two off-the-shelf guardrails.
+    1 = attack blocked/flagged, 0 = missed. Gateway secure-mode ASR is 0 on all."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    lg = {r["scenario"]: r for r in (json.loads(l) for l in open(llamaguard_path) if l.strip())}
+    nemo = {r["scenario"]: r for r in (json.loads(l) for l in open(nemo_path) if l.strip())}
+    scen = SCEN
+    rows = [
+        ("Gateway (secure)", [1] * len(scen)),
+        ("Llama Guard (input)", [1 if lg[s]["input_flagged"] == "unsafe" else 0 for s in scen]),
+        ("Llama Guard (output)", [1 if lg[s]["output_flagged"] == "unsafe" else 0 for s in scen]),
+        ("NeMo Guardrails", [1 if nemo[s]["blocked"] else 0 for s in scen]),
+    ]
+    data = [r[1] for r in rows]
+
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, "baseline-grid.pdf")
+    fig, ax = plt.subplots(figsize=(5.4, 2.2), constrained_layout=True)
+    ax.imshow(data, cmap="cividis", vmin=0, vmax=1, aspect="auto")
+    ax.set_xticks(range(len(scen)))
+    ax.set_xticklabels(scen, fontsize=8)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([r[0] for r in rows], fontsize=8)
+    for i in range(len(rows)):
+        for j in range(len(scen)):
+            v = data[i][j]
+            ax.text(j, i, "block" if v else "miss", ha="center", va="center",
+                    fontsize=7.5, color="white" if v else "black")
+    fig.savefig(path)
+    plt.close(fig)
+    return path
+
+
+def write_scorer_validity(judged_path, out_dir):
+    """2x2 agreement of the heuristic rubric with the LLM judge over all 72 cells."""
+    recs = [json.loads(l) for l in open(judged_path) if l.strip()]
+    tt = sum(1 for r in recs if r["heuristic_attack_success"] and r["judge_attack_success"])
+    tf = sum(1 for r in recs if r["heuristic_attack_success"] and not r["judge_attack_success"])
+    ft = sum(1 for r in recs if not r["heuristic_attack_success"] and r["judge_attack_success"])
+    ff = sum(1 for r in recs if not r["heuristic_attack_success"] and not r["judge_attack_success"])
+    n = len(recs)
+    agree = (tt + ff) / n
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, "scorer_validity.tex")
+    lines = [
+        "% Generated by scripts/make_figures.py -- do not edit by hand.",
+        r"\begin{tabular}{@{}lcc@{}}",
+        r"\toprule",
+        r" & Judge: attack & Judge: no attack \\",
+        r"\midrule",
+        rf"Rubric: attack    & {tt} & {tf} \\",
+        rf"Rubric: no attack & {ft} & {ff} \\",
+        r"\bottomrule",
+        r"\end{tabular}",
+        "",
+    ]
+    open(path, "w").write("\n".join(lines))
+    return path, dict(tt=tt, tf=tf, ft=ft, ff=ff, n=n, agree=round(agree, 3))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--summary", required=True)
     ap.add_argument("--factorial", required=True)
+    ap.add_argument("--full-factorial", default="")
+    ap.add_argument("--overhead", default="")
+    ap.add_argument("--judged", default="")
+    ap.add_argument("--llamaguard", default="")
+    ap.add_argument("--nemo", default="")
     ap.add_argument("--tables", default="tables")
     ap.add_argument("--figures", default="figures")
     ap.add_argument("--no-heatmap", action="store_true")
     args = ap.parse_args()
     print("factorial table:", write_factorial_table(args.factorial, args.tables))
+    if args.full_factorial:
+        print("dose-response:", make_dose_response(args.full_factorial, args.figures))
+    if args.overhead:
+        print("overhead:", make_overhead(args.overhead, args.figures))
+    if args.llamaguard and args.nemo:
+        print("baseline grid:", make_baseline_grid(args.llamaguard, args.nemo, args.figures))
+    if args.judged:
+        p, stats = write_scorer_validity(args.judged, args.tables)
+        print("scorer-validity table:", p, stats)
     if not args.no_heatmap:
         print("heatmap:", make_heatmap(args.summary, args.figures))
 
