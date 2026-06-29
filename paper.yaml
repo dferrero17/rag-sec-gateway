@@ -15,7 +15,7 @@ keywords:
   - open-source LLMs
   - cross-model evaluation
 target_venue:
-  - ICECCS 2026 (short paper)
+  - ICECCS 2026 (full paper)
 lifecycle: Drafting
 repo: dferrero17/rag-sec-gateway
 root_file: main.tex
