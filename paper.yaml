@@ -15,8 +15,8 @@ keywords:
   - open-source LLMs
   - cross-model evaluation
 target_venue:
-  - ICECCS 2026 (short paper)
-lifecycle: Ideation
+  - ICECCS 2026 (full paper)
+lifecycle: Drafting
 repo: dferrero17/rag-sec-gateway
 root_file: main.tex
 build: latexmk
@@ -32,9 +32,13 @@ abstract: >
   enforces five structural controls (input filtering, retrieval authorisation, context
   quarantine, output redaction, and scoped tool use) independently of the model that
   generates the answer. We map these controls onto the OWASP Top 10 for LLM Applications
-  and deploy the gateway in front of a retrieval-augmented chatbot in a real production
-  environment, the ATT platform. Across five open-source models we measure a
-  guardrails-off baseline and the same models with the gateway enabled, and report
-  per-model, per-scenario attack success rates with confidence intervals, attributing
-  residual risk to either the model's alignment or the gateway's model-independent
-  controls.
+  and integrate the gateway with a retrieval-augmented chatbot wired to a live tourism
+  platform's document store and identity provider, evaluating it on a controlled
+  synthetic corpus. Across the deterministic worst case and six open-source models (7B-70B),
+  attack success with the gateway on is zero for every model on all six evaluated OWASP
+  classes, while the guardrails-off baseline varies from model to model. A factorial
+  analysis attributes this to the structural controls rather than to a hardened prompt,
+  and the gateway neutralises attacks that two off-the-shelf guardrail systems
+  (Llama Guard and NeMo Guardrails) miss. Model-independent safety thus comes from the
+  gateway's structural controls, which hold by position in the pipeline, rather than
+  from any individual model's alignment.

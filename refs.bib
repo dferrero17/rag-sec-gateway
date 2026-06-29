@@ -8,11 +8,11 @@
 }
 
 @misc{owasp2025llmtop10,
-  title        = {{OWASP} Top 10 for Large Language Model Applications},
+  title        = {{OWASP} Top 10 for Large Language Model Applications (2025)},
   author       = {{OWASP Foundation}},
   year         = {2025},
   howpublished = {\url{https://genai.owasp.org/llm-top-10/}},
-  note         = {Accessed: 2026-06-28}
+  note         = {Accessed 2026-06-28}
 }
 
 @inproceedings{greshake2023indirect,
@@ -37,5 +37,287 @@
   year      = {2024}
 }
 
-% TODO: add references for the open-source models compared, the ATT platform,
-% and any additional related guardrail/gateway work used in the paper.
+@article{chen2024struq,
+  title   = {{StruQ}: Defending Against Prompt Injection with Structured Queries},
+  author  = {Chen, Sizhe and Piet, Julien and Sitawarin, Chawin and Wagner, David},
+  journal = {arXiv preprint arXiv:2402.06363},
+  year    = {2024}
+}
+
+@article{hines2024spotlighting,
+  title   = {Defending Against Indirect Prompt Injection Attacks With Spotlighting},
+  author  = {Hines, Keegan and Lopez, Gary and Hall, Matthew and Zarfati, Federico and Zunger, Yonatan and Kiciman, Emre},
+  journal = {arXiv preprint arXiv:2403.14720},
+  year    = {2024}
+}
+
+@article{rebedea2023nemo,
+  title   = {{NeMo} Guardrails: A Toolkit for Controllable and Safe {LLM} Applications with Programmable Rails},
+  author  = {Rebedea, Traian and Dinu, Razvan and Sreedhar, Makesh and Parisien, Christopher and Cohen, Jonathan},
+  journal = {arXiv preprint arXiv:2310.10501},
+  year    = {2023}
+}
+
+@article{inan2023llamaguard,
+  title   = {Llama Guard: {LLM}-based Input-Output Safeguard for Human-{AI} Conversations},
+  author  = {Inan, Hakan and Upasani, Kartikeya and Chi, Jianfeng and Rungta, Rashi and Iyer, Krithika and Mao, Yuning and Tontchev, Michael and Hu, Qing and Fuller, Brian and Testuggine, Davide and Khabsa, Madian},
+  journal = {arXiv preprint arXiv:2312.06674},
+  year    = {2023}
+}
+
+@article{liang2025saferag,
+  title   = {{SafeRAG}: Benchmarking Security in Retrieval-Augmented Generation of Large Language Models},
+  author  = {Liang, Xun and others},
+  journal = {arXiv preprint arXiv:2501.18636},
+  year    = {2025}
+}
+
+@article{zou2024poisonedrag,
+  title   = {{PoisonedRAG}: Knowledge Corruption Attacks to Retrieval-Augmented Generation of Large Language Models},
+  author  = {Zou, Wei and Geng, Runpeng and Wang, Binghui and Jia, Jinyuan},
+  journal = {arXiv preprint arXiv:2402.07867},
+  year    = {2024}
+}
+
+@misc{nist2023airmf,
+  title        = {Artificial Intelligence Risk Management Framework ({AI} {RMF} 1.0)},
+  author       = {{National Institute of Standards and Technology}},
+  year         = {2023},
+  howpublished = {NIST AI 100-1}
+}
+
+% --- Expanded related work (verified against arXiv API) ---
+
+@article{liu2024houyi,
+  title={Prompt Injection Attack against {LLM}-integrated Applications},
+  author={Liu, Yi and Deng, Gelei and Li, Yuekang and Wang, Kailong and Wang, Zihao and Wang, Xiaofeng and Zhang, Tianwei and Liu, Yepang and Wang, Haoyu and Zheng, Yan and Zhang, Leo Yu and Liu, Yang},
+  journal={arXiv preprint arXiv:2306.05499},
+  year={2023}
+}
+
+@inproceedings{toyer2024tensortrust,
+  title={Tensor Trust: Interpretable Prompt Injection Attacks from an Online Game},
+  author={Toyer, Sam and Watkins, Olivia and Mendes, Ethan Adrian and Svegliato, Justin and Bailey, Luke and Wang, Tiffany and Ong, Isaac and Elmaaroufi, Karim and Abbeel, Pieter and Darrell, Trevor and Ritter, Alan and Russell, Stuart},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2024},
+  note={arXiv:2311.01011}
+}
+
+@inproceedings{yi2025bipia,
+  title={Benchmarking and Defending Against Indirect Prompt Injection Attacks on Large Language Models},
+  author={Yi, Jingwei and Xie, Yueqi and Zhu, Bin and Kiciman, Emre and Sun, Guangzhong and Xie, Xing and Wu, Fangzhao},
+  booktitle={Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD)},
+  year={2025},
+  doi={10.1145/3690624.3709179},
+  note={arXiv:2312.14197}
+}
+
+@article{liu2024universalinjection,
+  title={Automatic and Universal Prompt Injection Attacks against Large Language Models},
+  author={Liu, Xiaogeng and Yu, Zhiyuan and Zhang, Yizhe and Zhang, Ning and Xiao, Chaowei},
+  journal={arXiv preprint arXiv:2403.04957},
+  year={2024}
+}
+
+@inproceedings{chen2024secalign,
+  title={{SecAlign}: Defending Against Prompt Injection with Preference Optimization},
+  author={Chen, Sizhe and Zharmagambetov, Arman and Mahloujifar, Saeed and Chaudhuri, Kamalika and Wagner, David and Guo, Chuan},
+  booktitle={Proceedings of the 2025 ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  year={2025},
+  note={arXiv:2410.05451}
+}
+
+@inproceedings{piet2024jatmo,
+  title={Jatmo: Prompt Injection Defense by Task-Specific Finetuning},
+  author={Piet, Julien and Alrashed, Maha and Sitawarin, Chawin and Chen, Sizhe and Wei, Zeming and Sun, Elizabeth and Alomair, Basel and Wagner, David},
+  booktitle={European Symposium on Research in Computer Security (ESORICS)},
+  year={2024},
+  doi={10.1007/978-3-031-70879-4_6},
+  note={arXiv:2312.17673}
+}
+
+@article{wallace2024instructionhierarchy,
+  title={The Instruction Hierarchy: Training {LLMs} to Prioritize Privileged Instructions},
+  author={Wallace, Eric and Xiao, Kai and Leike, Reimar and Weng, Lilian and Heidecke, Johannes and Beutel, Alex},
+  journal={arXiv preprint arXiv:2404.13208},
+  year={2024}
+}
+
+@inproceedings{qi2024shallowsafety,
+  title={Safety Alignment Should Be Made More Than Just a Few Tokens Deep},
+  author={Qi, Xiangyu and Panda, Ashwinee and Lyu, Kaifeng and Ma, Xiao and Roy, Subhrajit and Beirami, Ahmad and Mittal, Prateek and Henderson, Peter},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2025},
+  note={arXiv:2406.05946}
+}
+
+@inproceedings{zou2024circuitbreakers,
+  title={Improving Alignment and Robustness with Circuit Breakers},
+  author={Zou, Andy and Phan, Long and Wang, Justin and Duenas, Derek and Lin, Maxwell and Andriushchenko, Maksym and Wang, Rowan and Kolter, Zico and Fredrikson, Matt and Hendrycks, Dan},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  year={2024},
+  note={arXiv:2406.04313}
+}
+
+@article{beurerkellner2025designpatterns,
+  title={Design Patterns for Securing {LLM} Agents against Prompt Injections},
+  author={Beurer-Kellner, Luca and Buesser, Beat and Cretu, Ana-Maria and Debenedetti, Edoardo and Dobos, Daniel and Fabian, Daniel and Fischer, Marc and Froelicher, David and Grosse, Kathrin and Naeff, Daniel and Ozoani, Ezinwanne and Paverd, Andrew and Tramer, Florian and Volhejn, Vaclav},
+  journal={arXiv preprint arXiv:2506.08837},
+  year={2025}
+}
+
+@article{debenedetti2025camel,
+  title={Defeating Prompt Injections by Design},
+  author={Debenedetti, Edoardo and Shumailov, Ilia and Fan, Tianqi and Hayes, Jamie and Carlini, Nicholas and Fabian, Daniel and Kern, Christoph and Shi, Chongyang and Terzis, Andreas and Tramer, Florian},
+  journal={arXiv preprint arXiv:2503.18813},
+  year={2025}
+}
+
+@misc{willison2023dualllm,
+  title={The Dual {LLM} Pattern for Building {AI} Assistants that can Resist Prompt Injection},
+  author={Willison, Simon},
+  year={2023},
+  howpublished={Simon Willison's Weblog},
+  note={\url{https://simonwillison.net/2023/Apr/25/dual-llm-pattern/}, April 25, 2023}
+}
+
+@article{wu2024fsecure,
+  title={System-Level Defense against Indirect Prompt Injection Attacks: An Information Flow Control Perspective},
+  author={Wu, Fangzhou and Cecchetti, Ethan and Xiao, Chaowei},
+  journal={arXiv preprint arXiv:2409.19091},
+  year={2024}
+}
+
+@article{jacob2025typedirected,
+  title={Preventing Prompt Injection with Type-Directed Privilege Separation},
+  author={Jacob, Dennis and Alghamdi, Emad and Hu, Zhanhao and Alomair, Basel and Wagner, David},
+  journal={arXiv preprint arXiv:2509.25926},
+  year={2025}
+}
+
+@inproceedings{zeng2024goodbad,
+  title={The Good and The Bad: Exploring Privacy Issues in Retrieval-Augmented Generation ({RAG})},
+  author={Zeng, Shenglai and Zhang, Jiankun and He, Pengfei and Xing, Yue and Liu, Yiding and Xu, Han and Ren, Jie and Wang, Shuaiqiang and Yin, Dawei and Chang, Yi and Tang, Jiliang},
+  booktitle={Findings of the Association for Computational Linguistics: ACL 2024},
+  year={2024},
+  doi={10.18653/v1/2024.findings-acl.267},
+  note={arXiv:2402.16893}
+}
+
+@inproceedings{qi2025spillbeans,
+  title={Follow My Instruction and Spill the Beans: Scalable Data Extraction from Retrieval-Augmented Generation Systems},
+  author={Qi, Zhenting and Zhang, Hanlin and Xing, Eric and Kakade, Sham and Lakkaraju, Himabindu},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2025},
+  note={arXiv:2402.17840}
+}
+
+@inproceedings{anderson2025ismydata,
+  title={Is My Data in Your Retrieval Database? Membership Inference Attacks Against Retrieval Augmented Generation},
+  author={Anderson, Maya and Amit, Guy and Goldsteen, Abigail},
+  booktitle={Proceedings of the 11th International Conference on Information Systems Security and Privacy (ICISSP)},
+  publisher={SciTePress},
+  pages={474--485},
+  year={2025},
+  note={arXiv:2405.20446}
+}
+
+@article{chaudhari2024phantom,
+  title={Phantom: General Backdoor Attacks on Retrieval Augmented Language Generation},
+  author={Chaudhari, Harsh and Severi, Giorgio and Abascal, John and Suri, Anshuman and Jagielski, Matthew and Choquette-Choo, Christopher A. and Nasr, Milad and Nita-Rotaru, Cristina and Oprea, Alina},
+  journal={arXiv preprint arXiv:2405.20485},
+  year={2024}
+}
+
+@inproceedings{asai2024selfrag,
+  title={Self-{RAG}: Learning to Retrieve, Generate, and Critique through Self-Reflection},
+  author={Asai, Akari and Wu, Zeqiu and Wang, Yizhong and Sil, Avirup and Hajishirzi, Hannaneh},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2024},
+  note={arXiv:2310.11511}
+}
+
+@inproceedings{zhan2024injecagent,
+  title={{InjecAgent}: Benchmarking Indirect Prompt Injections in Tool-Integrated Large Language Model Agents},
+  author={Zhan, Qiusi and Liang, Zhixiang and Ying, Zifan and Kang, Daniel},
+  booktitle={Findings of the Association for Computational Linguistics: ACL 2024},
+  pages={10471--10506},
+  year={2024},
+  note={arXiv:2403.02691}
+}
+
+@inproceedings{debenedetti2024agentdojo,
+  title={{AgentDojo}: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for {LLM} Agents},
+  author={Debenedetti, Edoardo and Zhang, Jie and Balunovic, Mislav and Beurer-Kellner, Luca and Fischer, Marc and Tramer, Florian},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+  year={2024},
+  note={arXiv:2406.13352}
+}
+
+@inproceedings{zhan2025adaptiveipi,
+  title={Adaptive Attacks Break Defenses Against Indirect Prompt Injection Attacks on {LLM} Agents},
+  author={Zhan, Qiusi and Fang, Richard and Panchal, Henil Shalin and Kang, Daniel},
+  booktitle={Findings of the Association for Computational Linguistics: NAACL 2025},
+  year={2025},
+  note={arXiv:2503.00061}
+}
+
+@inproceedings{andriushchenko2025agentharm,
+  title={{AgentHarm}: A Benchmark for Measuring Harmfulness of {LLM} Agents},
+  author={Andriushchenko, Maksym and Souly, Alexandra and Dziemian, Mateusz and Duenas, Derek and Lin, Maxwell and Wang, Justin and Hendrycks, Dan and Zou, Andy and Kolter, Zico and Fredrikson, Matt and Winsor, Eric and Wynne, Jerome and Gal, Yarin and Davies, Xander},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2025},
+  note={arXiv:2410.09024}
+}
+
+@article{padhi2024graniteguardian,
+  title={Granite Guardian},
+  author={Padhi, Inkit and Nagireddy, Manish and Cornacchia, Giandomenico and Chaudhury, Subhajit and Pedapati, Tejaswini and Dognin, Pierre and Murugesan, Keerthiram and Miehling, Erik and Santillan Cooper, Martin and Fraser, Kieran and Zizzo, Giulio and Hameed, Muhammad Zaid and Purcell, Mark and Desmond, Michael and Pan, Qian and Vejsbjerg, Inge and Daly, Elizabeth M. and Hind, Michael and Geyer, Werner and Rawat, Ambrish and Varshney, Kush R. and Sattigeri, Prasanna},
+  journal={arXiv preprint arXiv:2412.07724},
+  year={2024}
+}
+
+@article{pfister2025gandalf,
+  title={Gandalf the Red: Adaptive Security for {LLMs}},
+  author={Pfister, Niklas and Volhejn, Vaclav and Knott, Manuel and Arias, Santiago and Bazinska, Julia and Haber, David and Rojas-Carulla, Mateo},
+  journal={arXiv preprint arXiv:2501.07927},
+  year={2025}
+}
+
+@misc{mitre2024atlas,
+  title={{MITRE ATLAS}: Adversarial Threat Landscape for Artificial-Intelligence Systems},
+  author={{MITRE Corporation}},
+  year={2024},
+  howpublished={MITRE knowledge base},
+  note={\url{https://atlas.mitre.org/}}
+}
+
+@inproceedings{wu2025isolategpt,
+  title={{IsolateGPT}: An Execution Isolation Architecture for {LLM}-Based Agentic Systems},
+  author={Wu, Yuhao and Roesner, Franziska and Kohno, Tadayoshi and Zhang, Ning and Iqbal, Umar},
+  booktitle={Network and Distributed System Security Symposium (NDSS)},
+  year={2025},
+  note={arXiv:2403.04960}
+}
+
+% --- Foundational access-control references (anchor the "standard practices" claim) ---
+
+@article{saltzer1975protection,
+  title={The Protection of Information in Computer Systems},
+  author={Saltzer, Jerome H. and Schroeder, Michael D.},
+  journal={Proceedings of the IEEE},
+  volume={63},
+  number={9},
+  pages={1278--1308},
+  year={1975}
+}
+
+@article{hardy1988confused,
+  title={The Confused Deputy: (or why capabilities might have been invented)},
+  author={Hardy, Norman},
+  journal={ACM SIGOPS Operating Systems Review},
+  volume={22},
+  number={4},
+  pages={36--38},
+  year={1988}
+}
