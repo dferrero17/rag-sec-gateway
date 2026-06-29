@@ -56,8 +56,9 @@ the underlying model's safety alignment, which varies from model to model and is
 hard to audit. We instead place the security-relevant decisions in a gateway
 around the model, an AI-aware Policy Enforcement Point on the RAG pipeline that
 applies five controls: three structural (retrieval authorisation and scoped tools,
-which hold by their position in the pipeline, together with context quarantine)
-and two heuristic (input filtering and output redaction, as defence in depth). We
+which we prove sound for every model by their position in the pipeline, together
+with context quarantine) and two heuristic (input filtering and output redaction, as
+defence in depth). We
 map the controls onto the OWASP Top 10 for LLM Applications and integrate the
 gateway with a chatbot wired to a live tourism platform's document store and identity
 provider, evaluating it on a controlled synthetic corpus across a deterministic
@@ -632,23 +633,85 @@ control path is about $7.5\,\mu$s, negligible beside model inference.}
 \label{sec:related}
 
 Prompt injection was characterised by Perez and Ribeiro \cite{perez2022ignore} for
-the direct case and by Greshake et al.\ \cite{greshake2023indirect} for the
-indirect case, where instructions hidden in external content hijack an
-LLM-integrated application, and Liu et al.\ \cite{liu2024promptinjection} give the
-first systematic benchmark of injection attacks and defenses across models.
-Model-side defenses change the model or its prompt, as in StruQ's structured
-queries \cite{chen2024struq} and spotlighting's provenance marking
-\cite{hines2024spotlighting}, while system-side toolkits such as NeMo Guardrails
-\cite{rebedea2023nemo} and Llama Guard \cite{inan2023llamaguard} classify inputs
-and outputs. RAG-specific risks have been studied as corpus poisoning
-\cite{zou2024poisonedrag} and benchmarked at the system level by SafeRAG
-\cite{liang2025saferag}, which scores RAG pipelines against several attack
-categories and is the natural integrated comparison target for future work. We
-differ in evaluating an integrated structural gateway across models with a
-guardrails-off baseline, where the load-bearing controls are standard
-access-control practices composed and tested rather than new techniques; the OWASP
-LLM Top-10 \cite{owasp2025llmtop10} and the NIST AI RMF \cite{nist2023airmf} frame
-the risks we target.
+the direct case and by Greshake et al.\ \cite{greshake2023indirect} for the indirect
+case, where instructions hidden in retrieved content hijack an LLM-integrated
+application; HouYi \cite{liu2024houyi} turned this into a black-box attack framework
+against deployed applications, and Liu et al.\ \cite{liu2024promptinjection} give the
+first systematic cross-model benchmark. The surface has since been charted by
+crowd-sourced attack corpora \cite{toyer2024tensortrust}, indirect-injection
+benchmarks \cite{yi2025bipia}, and automatic, transferable payloads produced by
+optimisation \cite{liu2024universalinjection}. These works define the classes the
+gateway must intercept; we contribute not a new attack but a structural layer
+measured against them with a guardrails-off baseline.
+
+One line of defence hardens the model itself. StruQ \cite{chen2024struq} and SecAlign
+\cite{chen2024secalign} separate instructions from data through structured queries
+and preference optimisation, spotlighting marks provenance \cite{hines2024spotlighting},
+Jatmo \cite{piet2024jatmo} fine-tunes a model to its task so injected instructions are
+not followed, and the instruction hierarchy \cite{wallace2024instructionhierarchy}
+trains a model to prioritise privileged messages. These defences are per-model and
+re-trainable, and recent work shows alignment can be shallow \cite{qi2024shallowsafety}
+or countered only at the representation level \cite{zou2024circuitbreakers}. The
+gateway's controls sit outside the model, so the same code applies unchanged across
+backends, which we verify cross-model.
+
+A second line constrains the system around the model. Design-pattern catalogues
+\cite{beurerkellner2025designpatterns} and the dual-LLM pattern
+\cite{willison2023dualllm} isolate untrusted content from privileged action, while
+CaMeL \cite{debenedetti2025camel}, information-flow control \cite{wu2024fsecure},
+type-directed privilege separation \cite{jacob2025typedirected}, and execution
+isolation \cite{wu2025isolategpt} enforce least privilege by construction. The gateway
+shares this secure-by-design stance but targets the RAG retrieval-and-generation path
+with lightweight controls and reports a guardrails-off baseline that quantifies what
+the structural layer adds.
+
+RAG makes the corpus a first-class attack surface. The datastore can be extracted
+verbatim through injected instructions \cite{qi2025spillbeans} or probed for
+membership \cite{anderson2025ismydata}, its privacy tension has been characterised
+\cite{zeng2024goodbad}, and it can be poisoned \cite{zou2024poisonedrag} or backdoored
+\cite{chaudhari2024phantom}; SafeRAG \cite{liang2025saferag} benchmarks pipelines
+against several such attacks and is the natural integrated comparison target. Model
+self-critique such as Self-RAG \cite{asai2024selfrag} complements, rather than
+replaces, the structural mediation we add at the retrieval boundary.
+
+Tool-using agents widen the surface again. InjecAgent \cite{zhan2024injecagent} and
+AgentDojo \cite{debenedetti2024agentdojo} benchmark indirect injection and defences
+for agents, AgentHarm \cite{andriushchenko2025agentharm} measures harmful tool use,
+and adaptive attacks break single-layer agent defences \cite{zhan2025adaptiveipi},
+which is the empirical case for defence in depth and for structural controls that do
+not inspect content. Guardrail classifiers such as NeMo Guardrails
+\cite{rebedea2023nemo}, Llama Guard \cite{inan2023llamaguard}, and Granite Guardian
+\cite{padhi2024graniteguardian}, and adaptive security services \cite{pfister2025gandalf},
+operate alongside such a layer rather than replacing it, as our baseline comparison
+shows. We align the threat model with the OWASP LLM Top-10 \cite{owasp2025llmtop10},
+the NIST AI RMF \cite{nist2023airmf}, and MITRE ATLAS \cite{mitre2024atlas}.
+Table~\ref{tab:positioning} positions representative approaches: ours is the only row
+that is model-independent, evaluated cross-model against a guardrails-off baseline,
+and RAG-aware at once.
+
+\begin{table}[t]
+\centering
+\caption{Positioning of representative defences against the structural gateway. Layer
+is where the control sits; the remaining columns mark whether the approach is
+model-independent, evaluated across multiple base models, reported against a
+guardrails-off baseline, and explicitly RAG-aware.}
+\label{tab:positioning}
+\small
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+Approach & Layer & Model-indep. & Cross-model & Guardrails-off & RAG-aware \\
+\midrule
+SecAlign~\cite{chen2024secalign}          & Model  & No  & Partial & No  & No  \\
+Instr.\ Hierarchy~\cite{wallace2024instructionhierarchy} & Model & No & No & No & No \\
+CaMeL~\cite{debenedetti2025camel}         & System & Yes & Yes     & No  & No  \\
+IsolateGPT~\cite{wu2025isolategpt}        & System & Yes & Partial & No  & No  \\
+Llama Guard~\cite{inan2023llamaguard}     & System & Yes & Partial & No  & No  \\
+Granite Guardian~\cite{padhi2024graniteguardian} & System & Yes & Partial & No & Yes \\
+PoisonedRAG~\cite{zou2024poisonedrag}     & System & Yes & Yes     & n/a & Yes \\
+\textbf{Ours}        & \textbf{System} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Discussion and Limitations}
 \label{sec:discussion}
