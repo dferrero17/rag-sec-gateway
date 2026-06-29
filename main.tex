@@ -32,17 +32,16 @@
 \title{An AI-Aware Security Gateway for Retrieval-Augmented Chatbots: A Cross-Model Evaluation}
 \titlerunning{An AI-Aware Security Gateway for RAG Chatbots}
 
-% TODO: confirm affiliations, ORCIDs, and per-author emails before submission.
 \author{%
-Daniel Martins Ferreira\inst{1}\and
-Rui Machado\inst{1}\and
-Henrique Teixeira\inst{1}\and
-Sebasti\~ao Teixeira\inst{1}\and
-Osvaldo Pacheco\inst{1}}
+Daniel Martins Ferreira\and
+Rui Machado\and
+Henrique Teixeira\and
+Sebasti\~ao Teixeira\and
+Osvaldo Pacheco}
 \authorrunning{D.\,M.\,Ferreira et al.}
 
-\institute{University of Aveiro, Aveiro, Portugal\\
-\email{danielmartinsferreira@ua.pt}}
+\institute{IEETA, LASI, University of Aveiro, Aveiro, Portugal\\
+\email{\{danielmartinsferreira, rmachado, henriqueft04, sebastiao.teixeira, orp\}@ua.pt}}
 
 \maketitle
 
@@ -104,7 +103,8 @@ authorisation and scoped tools, are least-privilege guarantees that hold by thei
 position in the pipeline; a third, context quarantine, is partially structural;
 the remaining two, input filtering and output redaction, are best-effort heuristic
 checks that add defence in depth. Retrieval authorisation and scoped tools are
-standard access-control practices: our contribution is not to invent controls but
+standard access-control practices, least privilege applied to retrieval and tool use
+\cite{saltzer1975protection}: our contribution is not to invent controls but
 to compose them into a model-independent gateway and to measure, across models,
 how much safety comes from the gateway versus from a given model's alignment.
 
@@ -155,7 +155,7 @@ instructions (indirect injection and corpus
 poisoning)~\cite{greshake2023indirect,zou2024poisonedrag}. It controls neither the
 gateway configuration nor the access labels.
 
-This is the confused-deputy problem. Without the gateway the model is a deputy that
+This is the confused-deputy problem~\cite{hardy1988confused}. Without the gateway the model is a deputy that
 acts on whatever text reaches it, exercising the union of the developer's authority
 (its tools) and any authority implied by untrusted content; injected text borrows
 that authority. The gateway re-imposes the principal's authority at the pipeline
@@ -501,7 +501,7 @@ outcome by suppression (the unauthorised document or instruction never reaches t
 model), which shows up as reduced ASR rather than a separate signal. Outcomes are
 scored by a transparent deterministic rubric keyed to each scenario's markers and
 specified in the released code.\footnote{Code, rubric, and data:
-\url{https://github.com/dferrero17/rag-sec-gateway} (anonymised for review).}
+\url{https://github.com/dferrero17/rag-sec-gateway}.}
 
 \subsection{Model-independent safety and the alignment baseline}
 With the gateway on, ASR is zero by the rubric for every model on every scenario.
