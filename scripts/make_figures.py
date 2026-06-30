@@ -199,7 +199,7 @@ def make_baseline_grid(llamaguard_path, nemo_path, out_dir):
         for j in range(len(scen)):
             v = data[i][j]
             ax.text(j, i, "block" if v else "miss", ha="center", va="center",
-                    fontsize=7.5, color="white" if v else "black")
+                    fontsize=8, fontweight="bold", color="black" if v else "white")
     fig.savefig(path)
     plt.close(fig)
     return path
