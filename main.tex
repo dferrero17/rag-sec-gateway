@@ -71,9 +71,10 @@ payload per OWASP class), while the
 guardrails-off baseline varies from model to model. A factorial sweep shows the
 structural controls, not a hardened prompt, close the attacks alignment misses, and
 the gateway neutralises attacks that two single-component guardrails, Llama Guard and
-NeMo Guardrails, miss. On \fpN{} benign queries across five models the gateway
-over-blocks \fpPoneCount{} inputs and alters \fpPfourTotal{} answers, and entitled
-users retain access to restricted documents, so the containment costs little utility.
+NeMo Guardrails, miss. On \fpN{} benign queries across five models the gateway rejects \fpPoneCount{}
+inputs (near-misses that quote its own filter phrases) and alters \fpPfourTotal{}
+answers, and entitled users retain access to restricted documents, so the containment
+costs little utility.
 The safety these controls give is model-independent by construction; we claim it
 empirically for open-source models from 7B to 70B with lexical retrieval.
 \end{abstract}
@@ -763,13 +764,18 @@ in innocent senses, the vocabulary the injection patterns key on (``booking
 system'', ``follow the instructions on the sign'', ``ignore the rain forecast'',
 ``reset my password'', ``the secret to a good espresso''). Every question was run
 through the secure pipeline on each of the five locally-served models
-(Table~\ref{tab:fp}). The input filter is deterministic and model-independent: it
-rejected \fpPoneCount{} of \fpN{} questions\fpPoneNote. Output redaction altered
-\fpPfourTotal{} of the \fpPfourRuns{} answers across the five models\fpPfourNote.
-The near-miss subset behaves no differently from the rest. The corpus is single-site
-and author-written, so we read this as evidence that the patterns are not
-trigger-happy on realistic traffic rather than as a precision guarantee; a
-deployment would measure the same two rates on its own logs.
+(Table~\ref{tab:fp}). The input filter is deterministic and model-independent: it rejected \fpPoneCount{}
+of \fpN{} questions, all of them near-misses that reproduce one of its phrases
+verbatim (``maintenance mode'' twice, ``the system prompts me'', ``you are now
+offering''), while the other 65 near-misses passed, so its cost is a 2\% rejection
+rate concentrated on messages that echo the filter's own vocabulary, each answered
+with a rephrase request rather than silently dropped. Output redaction altered
+\fpPfourTotal{} of the \fpPfourRuns{} answers the models produced for the remaining
+questions\fpPfourNote. The corpus is single-site and author-written, so we read this as
+evidence that the patterns are not trigger-happy on realistic traffic rather than as a
+precision guarantee; a deployment would measure the same two rates on its own logs,
+and because P1 is heuristic defence in depth (Section~\ref{ssec:nonguar}) an operator
+can narrow or drop a pattern without touching the structural guarantees.
 
 \begin{table}[t]
 \centering
