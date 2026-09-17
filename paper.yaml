@@ -24,20 +24,21 @@ pdf_file: main.pdf
 pdf_url: https://github.com/dferrero17/rag-sec-gateway/releases/latest/download/main.pdf
 abstract: >
   Retrieval-augmented generation (RAG) lets chatbots answer from an organisation's own
-  documents but widens the attack surface: untrusted retrieved content and user input reach
-  the model and its tools directly. The usual defence trusts the model's safety alignment, a
-  property of one component that an operator can neither inspect nor guarantee. We instead
-  treat injected content as a fault to be contained and place the security-relevant decisions
-  in a gateway around the model: a Policy Enforcement Point on the RAG pipeline that applies
-  five controls, two structural (retrieval authorisation, scoped tools) proved sound for every
+  documents, but untrusted retrieved content and user input then reach the model and its
+  tools directly, opening the door to prompt injection, retrieval-time data leakage, and tool
+  abuse. The usual defence trusts the model's safety alignment, a property of one component
+  that an operator can neither inspect nor guarantee. We instead treat injected content as a
+  fault to be contained rather than detected, and place the security-relevant decisions in a
+  gateway around the model: a Policy Enforcement Point on the RAG pipeline with five controls,
+  two structural (retrieval authorisation, scoped tools) that hold by construction for every
   model, a partially-structural context quarantine, and two heuristic (input filtering, output
   redaction). We map the controls onto the OWASP Top 10 for LLM Applications, integrate the
-  gateway with a production tourism-services platform's document store and identity provider
-  as a feasibility exercise (no user traffic served), and evaluate it on a controlled synthetic
-  corpus across a deterministic worst case and six open-source models (7B-70B). With the
-  gateway on, attack success is zero for every model on all six evaluated scenarios, while the
-  guardrails-off baseline varies from model to model. A factorial sweep attributes the closure
-  to the structural controls rather than the hardened prompt, the gateway neutralises attacks
-  that Llama Guard and NeMo Guardrails miss, and on 200 benign queries across five models it
-  over-blocks no input and alters no answer while entitled users keep access to restricted
-  documents.
+  gateway with an operational platform's document store and identity provider as a feasibility
+  exercise, and evaluate it on a controlled corpus across a deterministic worst case and six
+  open-source models (7B-70B). With the gateway on, no attack in six scenarios produces its
+  scored effect on any model, while the guardrails-off baseline varies from model to model; a
+  factorial sweep attributes the closure to the structural controls rather than to a hardened
+  prompt, and the gateway covers classes that content-safety classifiers are not built to see.
+  On 200 benign queries across five models the gateway rejects four near-miss inputs and alters
+  no answer; entitled users always receive their restricted documents, with redaction masking
+  literal credential strings in five of 40 delivered answers.
