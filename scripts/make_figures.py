@@ -179,16 +179,16 @@ def make_baseline_grid(llamaguard_path, nemo_path, out_dir):
     nemo = {r["scenario"]: r for r in (json.loads(l) for l in open(nemo_path) if l.strip())}
     scen = SCEN
     rows = [
-        ("Gateway (on)", [1] * len(scen)),
-        ("Llama Guard (input)", [1 if lg[s]["input_flagged"] == "unsafe" else 0 for s in scen]),
-        ("Llama Guard (output)", [1 if lg[s]["output_flagged"] == "unsafe" else 0 for s in scen]),
-        ("NeMo Guardrails", [1 if nemo[s]["blocked"] else 0 for s in scen]),
+        ("Gateway", [1] * len(scen)),
+        ("LlamaGuard in", [1 if lg[s]["input_flagged"] == "unsafe" else 0 for s in scen]),
+        ("LlamaGuard out", [1 if lg[s]["output_flagged"] == "unsafe" else 0 for s in scen]),
+        ("NeMo", [1 if nemo[s]["blocked"] else 0 for s in scen]),
     ]
     data = [r[1] for r in rows]
 
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "baseline-grid.pdf")
-    fig, ax = plt.subplots(figsize=(3.5, 1.6), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(3.5, 1.7), constrained_layout=True)
     ax.imshow(data, cmap="cividis", vmin=0, vmax=1, aspect="auto")
     ax.set_xticks(range(len(scen)))
     ax.set_xticklabels(scen, fontsize=7)
@@ -198,7 +198,7 @@ def make_baseline_grid(llamaguard_path, nemo_path, out_dir):
     for i in range(len(rows)):
         for j in range(len(scen)):
             v = data[i][j]
-            word = ("prevented" if i == 0 else "flagged") if v else "missed"
+            word = ("held" if i == 0 else "flag") if v else "miss"
             ax.text(j, i, word, ha="center", va="center",
                     fontsize=6.5, fontweight="bold", color="black" if v else "white")
     fig.savefig(path)
