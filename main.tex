@@ -780,9 +780,9 @@ can narrow or drop a pattern without touching the structural guarantees.
 \begin{table}[t]
 \centering
 \caption{Over-blocking on \fpN{} benign questions (\fpNearMiss{} near-misses) in
-secure mode. P1 is deterministic and model-independent; P4 is measured on each
-model's answers, and a P4 event means redaction changed a benign answer. Errors are
-model calls that failed or timed out and were excluded.}
+secure mode. P1 is deterministic and model-independent and rejected four questions,
+so each model answered the remaining 196; a P4 event means redaction changed one of
+those answers. Errors are model calls that failed or timed out (none occurred).}
 \label{tab:fp}
 \input{tables/fp_v2.tex}
 \end{table}
@@ -795,19 +795,26 @@ entitled principal (the HR user for the compensation record, the security operat
 for the credentials record) and as the \texttt{public}-only support agent, on the
 stub and the five models. For the entitled principal the restricted document was
 retrieved and placed in the context in \fpUtilRetrieved{} of \fpUtilRuns{} runs; for
-the support agent it was retrieved in none, as Proposition~\ref{prop:p2} requires.
-The gateway therefore never withheld an entitled document. What the entitled user
-actually received then depended on the two remaining layers. Output redaction masked
-the literal credential strings in \fpUtilRedacted{} answers, since P4 strips secret
-shapes regardless of who asks; that is P4 acting as designed (a chatbot should not
-paste production keys into a chat window), and an operator who wants the raw value
-would scope the redaction set per clearance. And in \fpUtilRefused{} runs the model
-itself declined to state the retrieved figures to a user entitled to them
-(\fpUtilRefusedByModel{}), an over-refusal by the model's alignment that the gateway
-neither causes nor can remove. The two utility costs thus separate cleanly:
-containment by the gateway costs the entitled user nothing on retrieval and only the
-literal secret string on output, while the model-dependent cost, over-refusal, is one
-more reason not to make alignment the enforcement layer.
+the support agent it was retrieved in none, as Proposition~\ref{prop:p2} requires
+(one generic question about the review cadence drew a plausible answer from general
+knowledge on four models, with the record absent from the context). The gateway
+therefore never withheld an entitled document. What the entitled user then received
+depended on the layers behind it. The model's answer carried the requested figure in
+\fpUtilDelivered{} of \fpUtilRetrieved{} runs. Of the rest, \fpUtilYear{} are an
+artefact of our own wording (two questions say ``2025'' where the record says ``this
+year'', and three models read that literally), \fpUtilTool{} are Mistral~7B
+deflecting into an e-mail to the HR or security team instead of answering, and
+\fpUtilRefused{} are the model itself declining, on confidentiality grounds, to state
+figures to a user entitled to them (\fpUtilRefusedByModel{}), an over-refusal by the
+model's alignment that the gateway neither causes nor can remove. Finally, output
+redaction masked the literal credential strings in \fpUtilRedacted{} of the delivered
+answers, since P4 strips secret shapes regardless of who asks; that is P4 acting as
+designed (a chatbot should not paste production keys into a chat window), and an
+operator who wants the raw value would scope the redaction set per clearance. The two
+utility costs thus separate cleanly: containment by the gateway costs the entitled
+user nothing on retrieval and only the literal secret string on output, while the
+model-dependent cost, over-refusal, is one more reason not to make alignment the
+enforcement layer.
 
 \section{Related Work}
 \label{sec:related}
