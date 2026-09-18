@@ -798,29 +798,21 @@ general customer service; \fpNearMiss{} of them are deliberate near-misses that 
 vocabulary the injection or secret patterns key on (``booking system'', ``follow the
 instructions on the sign'', ``ignore the rain forecast'', ``the system prompts me'',
 ``the secret to a good espresso''). Every question was run
-through the gateway-on pipeline on each of the five locally-served models
-(Table~\ref{tab:fp}). The input filter is deterministic and model-independent: it rejected \fpPoneCount{}
+through the gateway-on pipeline on each of the five locally-served models. The input filter is deterministic and model-independent: it rejected \fpPoneCount{}
 of \fpN{} questions, all of them near-misses that reproduce one of its phrases
 verbatim (``maintenance mode'' twice, ``the system prompts me'', ``you are now
 offering''), while the other 65 near-misses passed, so its cost is a 2\% rejection
 rate concentrated on messages that echo the filter's own vocabulary, each answered
 with a rephrase request rather than silently dropped. Output redaction altered
 \fpPfourTotal{} of the \fpPfourRuns{} answers the models produced for the remaining
-questions\fpPfourNote. The corpus is single-site and author-written, so we read this as
+196 questions (196 answers per model, no model call failed), so the table this
+result would fill is all zeros and we report it as a sentence. The corpus is single-site and author-written, so we read this as
 evidence that the patterns are not trigger-happy on realistic traffic rather than as a
 precision guarantee; a deployment would measure the same two rates on its own logs,
 and because P1 is heuristic defence in depth (Section~\ref{ssec:nonguar}) an operator
 can narrow or drop a pattern without touching the structural guarantees.
 
-\begin{table}[t]
-\centering
-\caption{Over-blocking on \fpN{} benign questions (\fpNearMiss{} near-misses) in
-gateway-on mode. P1 is deterministic and model-independent and rejected four questions,
-so each model answered the remaining 196; a P4 event means redaction changed one of
-those answers. Errors are model calls that failed or timed out (none occurred).}
-\label{tab:fp}
-\input{tables/fp_v2.tex}
-\end{table}
+
 
 The second side is whether retrieval authorisation over-blocks users who are
 entitled to a restricted document, since P2 filters the candidate set for everyone.
