@@ -58,23 +58,23 @@ and its tools directly, opening the door to prompt injection, retrieval-time dat
 leakage, and tool abuse. The usual defence trusts the model's safety alignment, a
 property of one component that an operator can neither inspect nor guarantee. We
 instead treat injected content as a fault to be contained rather than detected, and
-place the security-relevant decisions in a gateway around the model: a Policy
-Enforcement Point on the RAG pipeline with five controls, two structural (retrieval
-authorisation, scoped tools) that hold by construction for every model, a
+place the security-relevant decisions in a gateway around the model. The gateway is a
+Policy Enforcement Point on the RAG pipeline with five controls: two structural
+(retrieval authorisation, scoped tools) that hold by construction for every model, a
 partially-structural context quarantine, and two heuristic (input filtering, output
 redaction) for defence in depth. We map the controls onto the OWASP Top 10 for LLM
 Applications, integrate the gateway with the document store and identity provider of
 ROOTS, an operational tourism-sustainability platform, as a feasibility exercise, and evaluate it on a controlled corpus
 across a deterministic worst case and six open-source models (7B--70B). With the
 gateway on, no attack in six scenarios produces its scored effect on any model, while
-the guardrails-off baseline varies from model to model; a factorial sweep attributes
-each closure to a specific control rather than to the hardened prompt, with the two
-structural controls closing the authorisation and agency attacks on their own, and the
+the guardrails-off baseline varies from model to model. A factorial sweep attributes
+each closure to a specific control rather than to the hardened prompt; the two
+structural controls close the authorisation and agency attacks on their own, and the
 gateway covers classes that content-safety classifiers are not built to see. On 200
 benign queries across five models the gateway rejects four near-miss inputs and
-alters no answer; the gateway never withholds a restricted document from an entitled user (60 of 60
-retrievals), the model states the figure in 40 of those, and redaction masks literal
-credential strings in five. The
+alters no answer. It never withholds a restricted document from an entitled user (60
+of 60 retrievals), the model states the figure in 40 of those, and redaction masks
+literal credential strings in five. The
 structural guarantees hold by construction; the empirical claims cover open-source
 models with lexical retrieval and comment-embedded indirect payloads.
 \end{abstract}
@@ -121,7 +121,7 @@ much safety comes from the gateway versus from a given model's alignment.
 
 We evaluate six attack scenarios over five OWASP classes: S1 direct prompt injection, S2 indirect injection through a retrieved document, S3 RAG data leakage,
 S4 tool abuse, S5 system-prompt leakage, and S6 improper output handling. The paper
-makes three contributions: a model-independent gateway of five controls with a threat model and security properties that hold by construction (Sections~\ref{sec:threat}--\ref{sec:owasp}); a
+makes three contributions: a measured composition of known controls into a model-independent gateway, with a threat model and the security properties that hold by construction (Sections~\ref{sec:threat}--\ref{sec:owasp}); a
 feasibility integration of the gateway with the help assistant of ROOTS, the tourism-sustainability observatory of the ATT agenda at the University of Aveiro, wired to its document store and identity provider
 (Section~\ref{sec:deployment}); and a cross-model evaluation attributing the closure of each attack to a specific
 control, with the structural pair closing data leakage and tool abuse regardless of
@@ -385,7 +385,11 @@ stripping of Proposition~\ref{prop:p3c} and on where the payload sits. Its resul
 are not an upper bound on compromise for a model that violates A3, which is why P5
 caps tool execution and P3 is only partially structural. Whether a production model satisfies
 A3 is an empirical question; we pair P3 with output redaction (P4), which is what
-closes S5-style disclosure rather than this conditional guarantee.
+closes S5-style disclosure rather than this conditional guarantee. A3 also rules
+out tool calls whose arguments come from retrieved text; the integrated assistant's
+one tool takes recipient and body from the user turn, so there the restriction costs
+nothing, whereas tools that consume retrieved values fall outside P3's bound and keep
+only P5's cap.
 
 \subsection{Non-guarantees: the heuristic controls}
 \label{ssec:nonguar}
@@ -465,9 +469,8 @@ new chatbot microservice imports the gateway as a library and sits behind the
 platform's nginx reverse proxy on a dedicated route; each request carries the
 user's bearer token and returns the answer; the gateway's audit trail (retrieved
 document identifiers, control decisions, tool results) belongs in the operator's log,
-since returning it to the caller would reveal which restricted records matched, and
-an operator switch selects the gateway-on or guardrails-off policy for
-demonstrations. The service binds
+since returning it to the caller would reveal which restricted records matched; an
+operator switch selects the policy for demonstrations. The service binds
 the gateway's two deployment interfaces to the platform: the corpus interface loads
 documents from the knowledge-base REST API, and the principals interface validates
 the caller's Keycloak bearer token against the realm's JWKS and maps the realm roles
@@ -475,16 +478,16 @@ it carries to gateway clearances (every caller implicitly holds \texttt{public})
 retrieval authorisation (P2) runs on real identities. A document's access label is
 carried by an \texttt{acl} field added to the knowledge-base record schema. Only
 these two adapters are platform-specific; the five control implementations are the
-same code exercised in the evaluation. This demonstrates that the gateway slots into
-a real document store and identity provider without changes to the control logic.
-It is an integration and feasibility result: the adapters are exercised by the
+same code exercised in the evaluation, so the gateway slots into a real document
+store and identity provider without changes to the control logic. It is a
+feasibility result: the adapters are exercised by the
 service's test suite against the stub model, no end-to-end traffic was sent through
 the deployed stack, and we report no operational metrics, latency, or real-user
 study from it.
 
 \begin{figure}[t]
 \centering
-\resizebox{\columnwidth}{!}{%
+\resizebox{0.92\columnwidth}{!}{%
 \begin{tikzpicture}[
   >=Stealth,
   svc/.style={draw, rounded corners=1pt, minimum height=8mm, minimum width=15mm, align=center, font=\scriptsize, inner sep=3pt},
@@ -508,9 +511,8 @@ clearances). Only the two adapters are platform-specific.}
 \label{fig:arch}
 \end{figure}
 
-The controlled evaluation that follows instead uses a synthetic corpus, so that the
-comparison is identical and reproducible across models and free of production-data
-confounds. The corpus is a small fixed knowledge base of seven documents: two public
+The controlled evaluation instead uses a synthetic corpus, so that the comparison is
+identical across models and free of production-data confounds. The corpus is a small fixed knowledge base of seven documents: two public
 help articles (a support FAQ and a VPN guide), two restricted records (an HR record of
 executive compensation labelled \texttt{hr}, and a production-credentials record
 labelled \texttt{secops}), and three public documents that carry planted injection
@@ -654,12 +656,12 @@ would then rest on A3 and on P4.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{asr-heatmap.pdf}
+\includegraphics[width=0.85\columnwidth]{asr-heatmap.pdf}
 \caption{Guardrails-off attack success rate per scenario and model; with the
 gateway on every cell is $0.0$ (omitted). The stub is the deterministic worst case
-($1.0$ throughout). Among the six open-source models only S3 and S4 vary; all six leak
-S5, while S1, S2, and S6 produce no scored effect on any of them in this greedy run
-(sampled successes are reported in the text).}
+($1.0$ throughout). Among the open-source models only S3 and S4 vary; all six leak
+S5, and S1, S2, and S6 produce no scored effect in this greedy run (sampled successes
+are in the text).}
 \label{fig:heatmap}
 \end{figure}
 
@@ -755,11 +757,10 @@ reaches zero, as the layered propositions of Section~\ref{sec:properties} predic
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\columnwidth]{dose-response.pdf}
+\includegraphics[width=0.75\columnwidth]{dose-response.pdf}
 \caption{Attack success rate against the number of controls enabled (weak prompt),
-pooled over scenarios and all control combinations. The worst-case stub falls from
-$1.0$ to $0$; the open-model mean falls from $0.30$ to $0$. Each cell is a single
-deterministic run.}
+pooled over scenarios and control combinations; the stub falls from $1.0$ to $0$,
+the open-model mean from $0.30$ to $0$. Each cell is one deterministic run.}
 \label{fig:dose}
 \end{figure}
 
@@ -781,7 +782,7 @@ future work.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{baseline-grid.pdf}
+\includegraphics[width=0.85\columnwidth]{baseline-grid.pdf}
 \caption{Per-scenario coverage. ``Held'' marks the gateway containing the attack
 (gateway-on ASR$=0$), not a detection signal; ``flag''/``miss'' mark whether the
 guardrail flags the attack.}
@@ -863,9 +864,9 @@ enforcement layer.
 Prompt injection was characterised by Perez and Ribeiro \cite{perez2022ignore} for
 the direct case and by Greshake et al.\ \cite{greshake2023indirect} for the indirect
 case, where instructions hidden in retrieved content hijack an LLM-integrated
-application; HouYi \cite{liu2024houyi} turned this into a black-box attack framework
-against deployed applications, and Liu et al.\ \cite{liu2024promptinjection} give the
-first systematic cross-model benchmark. The surface has since been charted by
+application; HouYi \cite{liu2024houyi} turned this into a black-box attack
+framework, and Liu et al.\ \cite{liu2024promptinjection} give the first systematic
+cross-model benchmark. The surface has since been charted by
 crowd-sourced attack corpora \cite{toyer2024tensortrust}, indirect-injection
 benchmarks \cite{yi2025bipia}, and automatic, transferable payloads produced by
 optimisation \cite{liu2024universalinjection}. These works define the classes the gateway must intercept.
@@ -883,9 +884,9 @@ A second line constrains the system around the model. Design-pattern catalogues
 CaMeL \cite{debenedetti2025camel}, information-flow control \cite{wu2024fsecure},
 type-directed privilege separation \cite{jacob2025typedirected}, and execution
 isolation \cite{wu2025isolategpt} enforce least privilege by construction. The
-gateway shares this secure-by-design stance but targets the RAG
-retrieval-and-generation path with lightweight controls and reports a guardrails-off
-baseline that quantifies what the structural layer adds.
+gateway shares this secure-by-design stance but targets the RAG path with
+lightweight controls and a guardrails-off baseline that quantifies what the
+structural layer adds.
 
 RAG makes the corpus a first-class attack surface: the datastore can be extracted
 through injected instructions~\cite{qi2025spillbeans}, probed for
@@ -901,8 +902,7 @@ agent defences~\cite{zhan2025adaptiveipi}, the empirical case for structural con
 that do not inspect content. Guardrail classifiers such as NeMo Guardrails
 \cite{rebedea2023nemo}, Llama Guard \cite{inan2023llamaguard}, and Granite Guardian
 \cite{padhi2024graniteguardian}, and adaptive security services \cite{pfister2025gandalf},
-operate alongside such a layer rather than replacing it, as our baseline comparison
-shows. We align the threat model with the OWASP LLM Top-10 \cite{owasp2025llmtop10},
+operate alongside such a layer, as our baseline comparison shows. We align the threat model with the OWASP LLM Top-10 \cite{owasp2025llmtop10},
 the NIST AI Risk Management Framework~\cite{nist2023airmf}, and MITRE ATLAS \cite{mitre2024atlas}.
 In the vocabulary of the pattern catalogue~\cite{beurerkellner2025designpatterns},
 P2 is context minimisation at the retrieval boundary, P3 marks provenance, P5 is an
@@ -916,10 +916,10 @@ supplies, and a utility cost.
 \section{Discussion, Limitations, and Agenda}
 \label{sec:discussion}
 
-The structural controls are the load-bearing ones, holding against the stated
-threat model regardless of the model, and the factorial shows that the two attacks
-they target close only when they are enabled, whatever the prompt; the remaining
-attacks close through the heuristic controls, quarantine, and the secret-free prompt.
+The structural controls are the load-bearing ones: they hold against the stated
+threat model regardless of the model, and the factorial shows the two attacks they
+target close only when they are enabled, whatever the prompt; the rest close through
+the heuristic controls, quarantine, and the secret-free prompt.
 Several limitations bound the claims; we separate mechanism from empirical coverage.
 
 The design carries three trade-offs. The retriever is a lexical (TF-IDF) baseline,
@@ -942,41 +942,42 @@ estimating a precision; the redaction set is the five planted secret shapes, whi
 a deployment carrying legitimate account numbers would have to tune. Gateway-on cells are a single greedy run,
 sampling-invariant for the structural closures (the offending content is removed
 before generation) while the temperature-0.7 sweep covers the guardrails-off baseline
-only. The platform integration is a feasibility result, not an operational study.
+only. The platform integration is a feasibility result, not an operational study;
+it is also the portability argument: another RAG stack supplies its own corpus
+loader and principal resolver behind the same two interfaces, and the propositions
+ask of the host only that retrieval and tool execution pass through the gateway in
+order.
 
 What remains open is the adaptive attacker; the agenda below is one the artifact
 supports, since the policy object and pluggable corpus make each item a
 configuration, not a rewrite. (1) \emph{Breadth of payloads}: loading the
-BIPIA~\cite{yi2025bipia} indirect-injection corpus and the
-AgentDojo~\cite{debenedetti2024agentdojo} tasks through the corpus interface turns
-the class-representative zero into per-class rates, and tests that the structural
-closures stay at zero (they must, by Propositions~\ref{prop:p2} and~\ref{prop:p5})
+BIPIA~\cite{yi2025bipia} corpus and the AgentDojo~\cite{debenedetti2024agentdojo}
+tasks through the corpus interface turns the class-representative zero into
+per-class rates and tests that the structural closures stay at zero (they must, by Propositions~\ref{prop:p2} and~\ref{prop:p5})
 while the heuristic ones degrade; visible-body payloads belong in the same battery.
 (2) \emph{Adaptive red-teaming of the heuristics}: paraphrase, encoding, and
 instruction-splitting variants against the released pattern sets, reporting not the
 evasion rate, which Section~\ref{ssec:nonguar} predicts is high, but the impact
 evasion buys once the structural controls cap it. (3) \emph{A3 as a testable
 property}: Definition~\ref{def:fence} is a metamorphic test (vary only the fenced
-region, check that tool calls are invariant), and running it per model yields a
-fence-respect score for choosing models for P3, the first alignment property in
-this setting that can be measured rather than trusted.
+region, check that tool calls are invariant); run per model it yields a
+fence-respect score for choosing models for P3, an alignment property measured
+rather than trusted.
 (4) \emph{Semantic retrieval and clearance-bound tools}: an embedding retriever
-changes what enters the candidate set but not P2's filter on it, so the open
-questions are embedding-space evasion of ranking and label population on a real
-corpus, and, for P5, binding the recipient set to the clearances of the documents in
-context so that the cross-principal deputy of Section~\ref{ssec:nonguar} is closed
-structurally too. (5) \emph{Operational measurement}: the two over-blocking rates
+changes the candidate set but not P2's filter on it, leaving embedding-space evasion
+of ranking and label population on a real corpus open; for P5, binding the recipient
+set to the clearances of the documents in context would close the cross-principal
+deputy of Section~\ref{ssec:nonguar} structurally too. (5) \emph{Operational measurement}: the two over-blocking rates
 and the entitled-access check of Section~\ref{ssec:utility} are the metrics a
 deployment should log continuously; a controlled pilot on the integrated platform
-would give them a base rate, a latency profile, and a head-to-head with an integrated
-baseline such as SafeRAG~\cite{liang2025saferag} and a like-for-like injection
-detector.
+would give them a base rate, a latency profile, and a head-to-head with
+SafeRAG~\cite{liang2025saferag} and a like-for-like injection detector.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented an AI-aware security gateway that defends a RAG chatbot through five
-controls applied around the model, its structural controls proved model-independent
+We presented an AI-aware security gateway, a measured composition of five known
+controls applied around a RAG chatbot's model, its structural controls proved model-independent
 and confirmed across open-source models, integrated with ROOTS as a feasibility
 exercise, and shown to cost little utility. For an operator the message is to put
 the security-relevant decisions in an auditable layer around the model: containment
