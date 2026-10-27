@@ -1,5 +1,5 @@
 \documentclass[conference]{IEEEtran}
-% PRDC 2026 main-track regular paper: IEEE double-column, double-blind,
+% PRDC 2026 main-track regular paper, camera-ready: IEEE double-column,
 % 10 pages excluding references. https://prdc-symposium.org/2026/
 \IEEEoverridecommandlockouts
 
@@ -17,8 +17,10 @@
 \usepackage{balance}
 \usepackage[hidelinks]{hyperref}
 
-% IEEEtran selects Adobe Courier (pcr); fall back to CM typewriter when absent.
-\renewcommand{\ttdefault}{cmtt}
+% IEEEtran selects Adobe Courier (pcr), absent from this TeX install; under T1
+% encoding CM typewriter would come in as bitmap (Type 3) fonts, which IEEE PDF
+% eXpress rejects, so use Latin Modern typewriter (Type 1) instead.
+\renewcommand{\ttdefault}{lmtt}
 % Some entries carry a doi field that IEEEtran.bst passes through as \doi{}.
 \providecommand{\doi}[1]{\href{https://doi.org/#1}{\nolinkurl{#1}}}
 
@@ -31,9 +33,8 @@
 % (computed by scripts/human_kappa.py from the filled annotation workbook).
 \newcommand{\humankappa}{0.85}
 
-% Anonymous artifact mirror for double-blind review; replace with the public
-% repository URL for camera-ready.
-\newcommand{\artifacturl}{\url{https://anonymous.4open.science/r/rag-gateway-prdc}}
+% Public artifact (code, rubric, corpus, transcripts, and data).
+\newcommand{\artifacturl}{\url{https://github.com/dferrero17/rag-sec-gateway}}
 
 % Expanded false-positive study (evaluation/bench_fp_v2.py in the artifact).
 \input{fpnumbers}
@@ -43,8 +44,10 @@
 \title{An AI-Aware Security Gateway for Retrieval-Augmented Chatbots:\\
 Model-Independent Controls and a Cross-Model Evaluation}
 
-% Anonymized for PRDC 2026 double-blind review. Fill in for camera-ready.
-\author{\IEEEauthorblockN{Anonymous Author(s)}}
+\author{\IEEEauthorblockN{Daniel Martins Ferreira, Rui Machado, Henrique Teixeira,
+Sebasti\~ao Teixeira, and Osvaldo Pacheco}
+\IEEEauthorblockA{IEETA, LASI, University of Aveiro, Aveiro, Portugal\\
+\{danielmartinsferreira, rmachado, henriqueft04, sebastiao.teixeira, orp\}@ua.pt}}
 
 \maketitle
 
@@ -60,8 +63,8 @@ Enforcement Point on the RAG pipeline with five controls, two structural (retrie
 authorisation, scoped tools) that hold by construction for every model, a
 partially-structural context quarantine, and two heuristic (input filtering, output
 redaction) for defence in depth. We map the controls onto the OWASP Top 10 for LLM
-Applications, integrate the gateway with an operational platform's document store and
-identity provider as a feasibility exercise, and evaluate it on a controlled corpus
+Applications, integrate the gateway with the document store and identity provider of
+ROOTS, an operational tourism-sustainability platform, as a feasibility exercise, and evaluate it on a controlled corpus
 across a deterministic worst case and six open-source models (7B--70B). With the
 gateway on, no attack in six scenarios produces its scored effect on any model, while
 the guardrails-off baseline varies from model to model; a factorial sweep attributes
@@ -119,7 +122,7 @@ much safety comes from the gateway versus from a given model's alignment.
 We evaluate six attack scenarios over five OWASP classes: S1 direct prompt injection, S2 indirect injection through a retrieved document, S3 RAG data leakage,
 S4 tool abuse, S5 system-prompt leakage, and S6 improper output handling. The paper
 makes three contributions: a model-independent gateway of five controls with a threat model and security properties that hold by construction (Sections~\ref{sec:threat}--\ref{sec:owasp}); a
-feasibility integration of the gateway with the help assistant of an operational regional-services platform, wired to its document store and identity provider
+feasibility integration of the gateway with the help assistant of ROOTS, the tourism-sustainability observatory of the ATT agenda at the University of Aveiro, wired to its document store and identity provider
 (Section~\ref{sec:deployment}); and a cross-model evaluation attributing the closure of each attack to a specific
 control, with the structural pair closing data leakage and tool abuse regardless of
 prompt (Section~\ref{sec:evaluation}). That evaluation pairs the model-dependent
@@ -127,7 +130,7 @@ guardrails-off baseline against the uniform gateway-on behaviour and adds a full
 $2^5$ factorial sweep, external guardrail baselines, two scorer-validity checks,
 a negligible-overhead analysis, and a utility study: over-blocking on \fpN{} benign
 queries across five models and an entitled-user access check. The evaluation code,
-rubric, corpus, and every stored transcript are in the anonymous
+rubric, corpus, and every stored transcript are in the public
 artifact.\footnote{Code, rubric, corpus, transcripts, and data: \artifacturl.}
 
 \section{Background and Threat Model}
@@ -451,7 +454,7 @@ LLM10 Unbounded Consumption       & out of scope & rate limiting / cost governan
 \section{Integration with an Operational Platform}
 \label{sec:deployment}
 
-The target application is the help assistant of a regional platform, a microservice system whose knowledge-base service exposes documentation
+The target application is the help assistant of ROOTS, a microservice system whose knowledge-base service exposes documentation
 articles over a REST API and whose identity is managed by a Keycloak realm
 (Fig.~\ref{fig:arch}). Authenticated platform users (visitors, analysts, and
 administrators, expressed as realm roles) ask natural-language questions about the
@@ -916,35 +919,34 @@ supplies, and a utility cost.
 The structural controls are the load-bearing ones, holding against the stated
 threat model regardless of the model, and the factorial shows that the two attacks
 they target close only when they are enabled, whatever the prompt; the remaining
-attacks close through the heuristic controls, quarantine, and the secret-free prompt. Several limitations bound the
-claims, and we separate those that concern the mechanism from those that concern
-the empirical coverage.
+attacks close through the heuristic controls, quarantine, and the secret-free prompt.
+Several limitations bound the claims; we separate mechanism from empirical coverage.
 
-The design carries three trade-offs. The retriever is a lexical (term-frequency, TF-IDF) baseline,
+The design carries three trade-offs. The retriever is a lexical (TF-IDF) baseline,
 but retrieval authorisation acts on the candidate set independently of ranking, so
-Proposition~\ref{prop:p2} is unaffected by the retriever. The tool protocol is
+Proposition~\ref{prop:p2} is unaffected. The tool protocol is
 textual, so an aligned model that declines the literal call syntax lowers
 guardrails-off tool-abuse success, an alignment effect on the baseline that gateway-on
 validation overrides. Output redaction strips the secret but the model may still echo
 its secret-free hardened prompt, the residual noted in the scoring-validity check.
 
 The empirical coverage is deliberately narrow: open-source models from 7B to 70B, no
-commercial models, one synthetic corpus in one domain. Because P2 and P5 act by
-position, this caveat concerns how widely we have measured, not the mechanism.
+commercial models, one synthetic corpus in one domain; because P2 and P5 act by
+position, the caveat concerns how widely we measured, not the mechanism.
 The attack battery is also narrow: one hand-crafted payload per OWASP class scored by
 literal markers, so the cross-model ``zero'' is a class-representative demonstration,
 not a per-class success rate; the payload-independent structural propositions carry
 the class-level claim. The utility study is one author-written corpus and one
 entitled-user probe, so it bounds over-blocking on realistic traffic rather than
-estimating a precision; the redaction set is the five planted secret shapes, and a
-deployment carrying legitimate account numbers would have to tune it. Gateway-on cells are a single greedy run,
+estimating a precision; the redaction set is the five planted secret shapes, which
+a deployment carrying legitimate account numbers would have to tune. Gateway-on cells are a single greedy run,
 sampling-invariant for the structural closures (the offending content is removed
 before generation) while the temperature-0.7 sweep covers the guardrails-off baseline
 only. The platform integration is a feasibility result, not an operational study.
 
-What remains open is the adaptive attacker, and we close with the agenda the
-artifact supports, since the policy object and the pluggable corpus make each item a
-configuration rather than a rewrite. (1) \emph{Breadth of payloads}: loading the
+What remains open is the adaptive attacker; the agenda below is one the artifact
+supports, since the policy object and pluggable corpus make each item a
+configuration, not a rewrite. (1) \emph{Breadth of payloads}: loading the
 BIPIA~\cite{yi2025bipia} indirect-injection corpus and the
 AgentDojo~\cite{debenedetti2024agentdojo} tasks through the corpus interface turns
 the class-representative zero into per-class rates, and tests that the structural
@@ -956,8 +958,8 @@ evasion rate, which Section~\ref{ssec:nonguar} predicts is high, but the impact
 evasion buys once the structural controls cap it. (3) \emph{A3 as a testable
 property}: Definition~\ref{def:fence} is a metamorphic test (vary only the fenced
 region, check that tool calls are invariant), and running it per model yields a
-fence-respect score that lets operators choose models for P3, the first alignment
-property in this setting that can be measured rather than trusted.
+fence-respect score for choosing models for P3, the first alignment property in
+this setting that can be measured rather than trusted.
 (4) \emph{Semantic retrieval and clearance-bound tools}: an embedding retriever
 changes what enters the candidate set but not P2's filter on it, so the open
 questions are embedding-space evasion of ranking and label population on a real
@@ -966,20 +968,31 @@ context so that the cross-principal deputy of Section~\ref{ssec:nonguar} is clos
 structurally too. (5) \emph{Operational measurement}: the two over-blocking rates
 and the entitled-access check of Section~\ref{ssec:utility} are the metrics a
 deployment should log continuously; a controlled pilot on the integrated platform
-would give them a base rate, add the latency profile a synthetic run cannot, and
-admit a head-to-head with an integrated baseline such as
-SafeRAG~\cite{liang2025saferag} and a like-for-like injection detector.
+would give them a base rate, a latency profile, and a head-to-head with an integrated
+baseline such as SafeRAG~\cite{liang2025saferag} and a like-for-like injection
+detector.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
 We presented an AI-aware security gateway that defends a RAG chatbot through five
 controls applied around the model, its structural controls proved model-independent
-and confirmed across open-source models, integrated, as a feasibility exercise, with an operational platform's document store
-and identity provider, and shown to cost little utility. For an operator the message is
-to put the security-relevant decisions in an auditable layer around the model rather
-than in the model itself: containment by position is the guarantee, and the model's
-alignment is a bonus one can measure but should not depend on.
+and confirmed across open-source models, integrated with ROOTS as a feasibility
+exercise, and shown to cost little utility. For an operator the message is to put
+the security-relevant decisions in an auditable layer around the model: containment
+by position is the guarantee, and the model's alignment is a bonus one can measure
+but should not depend on.
+
+\section*{Acknowledgment}
+This research was funded by the PRR -- Plano de Recupera\c{c}\~ao e Resili\^encia
+and by the NextGenerationEU funds at Universidade de Aveiro, through the scope of
+the Agenda for Business Innovation ``ATT -- Agenda Mobilizadora Acelerar e
+Transformar o Turismo'' (Project no.\ 47 with the application C645192610-00000060).
+
+% Mandatory funder logo bar, used as supplied (composed bar, colour variant); do
+% not recompose or crop it. Set inline so it stays with the funding statement.
+\par\vspace{3pt}
+\noindent\includegraphics[width=\columnwidth]{BARRA_LOGOS-COR.png}
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}

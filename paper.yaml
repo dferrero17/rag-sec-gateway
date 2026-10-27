@@ -28,20 +28,20 @@ abstract: >
   opening the door to prompt injection, retrieval-time data leakage, and tool abuse. The usual
   defence trusts the model's safety alignment, a property of one component that an operator can
   neither inspect nor guarantee. We instead treat injected content as a fault to be contained
-  rather than detected, and place the security-relevant decisions in a gateway around the model:
-  a Policy Enforcement Point on the RAG pipeline with five controls, two structural (retrieval
+  rather than detected, and place the security-relevant decisions in a gateway around the model: a
+  Policy Enforcement Point on the RAG pipeline with five controls, two structural (retrieval
   authorisation, scoped tools) that hold by construction for every model, a partially-structural
   context quarantine, and two heuristic (input filtering, output redaction) for defence in depth.
-  We map the controls onto the OWASP Top 10 for LLM Applications, integrate the gateway with an
-  operational platform's document store and identity provider as a feasibility exercise, and
-  evaluate it on a controlled corpus across a deterministic worst case and six open-source models
-  (7B-70B). With the gateway on, no attack in six scenarios produces its scored effect on any
-  model, while the guardrails-off baseline varies from model to model; a factorial sweep
-  attributes each closure to a specific control rather than to the hardened prompt, with the two
-  structural controls closing the authorisation and agency attacks on their own, and the gateway
-  covers classes that content-safety classifiers are not built to see. On 200 benign queries
-  across five models the gateway rejects four near-miss inputs and alters no answer; the gateway
-  never withholds a restricted document from an entitled user (60 of 60 retrievals), the model
-  states the figure in 40 of those, and redaction masks literal credential strings in five. The
-  structural guarantees hold by construction; the empirical claims cover open-source models with
-  lexical retrieval and comment-embedded indirect payloads.
+  We map the controls onto the OWASP Top 10 for LLM Applications, integrate the gateway with the
+  document store and identity provider of ROOTS, an operational tourism-sustainability platform,
+  as a feasibility exercise, and evaluate it on a controlled corpus across a deterministic worst
+  case and six open-source models (7B-70B). With the gateway on, no attack in six scenarios
+  produces its scored effect on any model, while the guardrails-off baseline varies from model to
+  model; a factorial sweep attributes each closure to a specific control rather than to the
+  hardened prompt, with the two structural controls closing the authorisation and agency attacks
+  on their own, and the gateway covers classes that content-safety classifiers are not built to
+  see. On 200 benign queries across five models the gateway rejects four near-miss inputs and
+  alters no answer; the gateway never withholds a restricted document from an entitled user (60 of
+  60 retrievals), the model states the figure in 40 of those, and redaction masks literal
+  credential strings in five. The structural guarantees hold by construction; the empirical claims
+  cover open-source models with lexical retrieval and comment-embedded indirect payloads.

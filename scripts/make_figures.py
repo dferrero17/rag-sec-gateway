@@ -31,6 +31,7 @@ SCEN_LABEL = {"S1": "S1 direct injection", "S2": "S2 indirect injection", "S3": 
 def make_heatmap(summary_path, out_dir):
     import matplotlib
     matplotlib.use("Agg")
+    matplotlib.rcParams["pdf.fonttype"] = 42  # embed TrueType, not Type 3 (IEEE PDF eXpress)
     import matplotlib.pyplot as plt
 
     rows = json.load(open(summary_path))["by_model_scenario_mode"]
@@ -95,6 +96,7 @@ def make_dose_response(full_factorial_path, out_dir):
     mean over the open models. Pooled over scenarios and control combinations."""
     import matplotlib
     matplotlib.use("Agg")
+    matplotlib.rcParams["pdf.fonttype"] = 42  # embed TrueType, not Type 3 (IEEE PDF eXpress)
     import matplotlib.pyplot as plt
     from collections import defaultdict
 
@@ -137,6 +139,7 @@ def make_overhead(overhead_path, out_dir):
     gateway's control path is negligible next to model inference (seconds)."""
     import matplotlib
     matplotlib.use("Agg")
+    matplotlib.rcParams["pdf.fonttype"] = 42  # embed TrueType, not Type 3 (IEEE PDF eXpress)
     import matplotlib.pyplot as plt
 
     recs = [json.loads(l) for l in open(overhead_path) if l.strip()]
@@ -173,6 +176,7 @@ def make_baseline_grid(llamaguard_path, nemo_path, out_dir):
     1 = attack blocked/flagged, 0 = missed. Gateway secure-mode ASR is 0 on all."""
     import matplotlib
     matplotlib.use("Agg")
+    matplotlib.rcParams["pdf.fonttype"] = 42  # embed TrueType, not Type 3 (IEEE PDF eXpress)
     import matplotlib.pyplot as plt
 
     lg = {r["scenario"]: r for r in (json.loads(l) for l in open(llamaguard_path) if l.strip())}
