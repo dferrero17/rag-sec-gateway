@@ -44,10 +44,13 @@
 \title{An AI-Aware Security Gateway for Retrieval-Augmented Chatbots:\\
 Model-Independent Controls and a Cross-Model Evaluation}
 
-\author{\IEEEauthorblockN{Daniel Martins Ferreira, Rui Machado, Henrique Teixeira,
-Sebasti\~ao Teixeira, and Osvaldo Pacheco}
-\IEEEauthorblockA{IEETA, LASI, University of Aveiro, Aveiro, Portugal\\
-\{danielmartinsferreira, rmachado, henriqueft04, sebastiao.teixeira, orp\}@ua.pt}}
+\author{\IEEEauthorblockN{Daniel Martins Ferreira\IEEEauthorrefmark{1},
+Rui Machado\IEEEauthorrefmark{2}, Sebasti\~ao Teixeira\IEEEauthorrefmark{1},
+Henrique Teixeira\IEEEauthorrefmark{1}, and Osvaldo Pacheco\IEEEauthorrefmark{1}}
+\IEEEauthorblockA{\IEEEauthorrefmark{1}IEETA, LASI, University of Aveiro, Aveiro, Portugal\\
+\{danielmartinsferreira, sebastiao.teixeira, henriqueft04, orp\}@ua.pt}
+\IEEEauthorblockA{\IEEEauthorrefmark{2}Floating Point Solutions, Lda., Aveiro, Portugal\\
+rui.machado@flt.pt}}
 
 \maketitle
 
@@ -480,10 +483,9 @@ carried by an \texttt{acl} field added to the knowledge-base record schema. Only
 these two adapters are platform-specific; the five control implementations are the
 same code exercised in the evaluation, so the gateway slots into a real document
 store and identity provider without changes to the control logic. It is a
-feasibility result: the adapters are exercised by the
-service's test suite against the stub model, no end-to-end traffic was sent through
-the deployed stack, and we report no operational metrics, latency, or real-user
-study from it.
+feasibility result: the adapters are exercised by the service's test suite against
+the stub model, no end-to-end traffic went through the deployed stack, and we report
+no operational metrics from it.
 
 \begin{figure}[t]
 \centering
@@ -656,7 +658,7 @@ would then rest on A3 and on P4.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.85\columnwidth]{asr-heatmap.pdf}
+\includegraphics[width=0.8\columnwidth]{asr-heatmap.pdf}
 \caption{Guardrails-off attack success rate per scenario and model; with the
 gateway on every cell is $0.0$ (omitted). The stub is the deterministic worst case
 ($1.0$ throughout). Among the open-source models only S3 and S4 vary; all six leak
@@ -782,7 +784,7 @@ future work.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.85\columnwidth]{baseline-grid.pdf}
+\includegraphics[width=0.8\columnwidth]{baseline-grid.pdf}
 \caption{Per-scenario coverage. ``Held'' marks the gateway containing the attack
 (gateway-on ASR$=0$), not a detection signal; ``flag''/``miss'' mark whether the
 guardrail flags the attack.}
@@ -869,14 +871,15 @@ framework, and Liu et al.\ \cite{liu2024promptinjection} give the first systemat
 cross-model benchmark. The surface has since been charted by
 crowd-sourced attack corpora \cite{toyer2024tensortrust}, indirect-injection
 benchmarks \cite{yi2025bipia}, and automatic, transferable payloads produced by
-optimisation \cite{liu2024universalinjection}. These works define the classes the gateway must intercept.
+optimisation \cite{liu2024universalinjection}; these define the classes the gateway
+must intercept.
 
 One line of defence hardens the model itself. StruQ \cite{chen2024struq} and SecAlign
 \cite{chen2024secalign} separate instructions from data through structured queries
 and preference optimisation, spotlighting marks provenance \cite{hines2024spotlighting},
-Jatmo \cite{piet2024jatmo} fine-tunes a model to its task so injected instructions are
-not followed, and the instruction hierarchy \cite{wallace2024instructionhierarchy}
-trains a model to prioritise privileged messages. These defences are per-model and re-trainable, and alignment can be shallow~\cite{qi2024shallowsafety} or countered only at the representation level~\cite{zou2024circuitbreakers}; the gateway's controls sit outside the model, so the same code applies unchanged across backends.
+Jatmo \cite{piet2024jatmo} task-tunes a model so injected instructions are not
+followed, and the instruction hierarchy \cite{wallace2024instructionhierarchy} trains
+it to prioritise privileged messages. These defences are per-model and re-trainable, and alignment can be shallow~\cite{qi2024shallowsafety} or countered only at the representation level~\cite{zou2024circuitbreakers}; the gateway's controls sit outside the model, so the same code applies unchanged across backends.
 
 A second line constrains the system around the model. Design-pattern catalogues
 \cite{beurerkellner2025designpatterns} and the dual-LLM pattern
@@ -957,8 +960,8 @@ per-class rates and tests that the structural closures stay at zero (they must, 
 while the heuristic ones degrade; visible-body payloads belong in the same battery.
 (2) \emph{Adaptive red-teaming of the heuristics}: paraphrase, encoding, and
 instruction-splitting variants against the released pattern sets, reporting not the
-evasion rate, which Section~\ref{ssec:nonguar} predicts is high, but the impact
-evasion buys once the structural controls cap it. (3) \emph{A3 as a testable
+evasion rate, which Section~\ref{ssec:nonguar} predicts is high, but the impact it
+buys once the structural controls cap it. (3) \emph{A3 as a testable
 property}: Definition~\ref{def:fence} is a metamorphic test (vary only the fenced
 region, check that tool calls are invariant); run per model it yields a
 fence-respect score for choosing models for P3, an alignment property measured
