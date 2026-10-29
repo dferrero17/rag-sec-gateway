@@ -24,13 +24,14 @@ SCEN = ["S1", "S2", "S3", "S4", "S5", "S6"]
 MODEL_LABEL = {"stub": "Stub", "llama31-8b": "Llama 3.1 8B", "qwen25-7b": "Qwen2.5 7B",
                "mistral-7b": "Mistral 7B", "gemma3-12b": "Gemma 3 12B", "phi4-14b": "Phi-4 14B",
                "llama31-70b": "Llama 3.1 70B"}
-SCEN_LABEL = {"S1": "S1 direct inj.", "S2": "S2 indirect inj.", "S3": "S3 data leak",
-              "S4": "S4 tool abuse", "S5": "S5 prompt leak", "S6": "S6 bad output"}
+SCEN_LABEL = {"S1": "S1 direct injection", "S2": "S2 indirect injection", "S3": "S3 data leakage",
+              "S4": "S4 tool abuse", "S5": "S5 prompt leakage", "S6": "S6 improper output"}
 
 
 def make_heatmap(summary_path, out_dir):
     import matplotlib
     matplotlib.use("Agg")
+    matplotlib.rcParams["pdf.fonttype"] = 42  # embed TrueType, not Type 3 (IEEE PDF eXpress)
     import matplotlib.pyplot as plt
 
     rows = json.load(open(summary_path))["by_model_scenario_mode"]
@@ -39,19 +40,18 @@ def make_heatmap(summary_path, out_dir):
 
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "asr-heatmap.pdf")
-    fig, ax = plt.subplots(figsize=(6.4, 3.0), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(3.5, 2.3), constrained_layout=True)
     im = ax.imshow(data, cmap="cividis", vmin=0.0, vmax=1.0, aspect="auto")
     ax.set_xticks(range(len(MODELS)))
-    ax.set_xticklabels([MODEL_LABEL[m] for m in MODELS], rotation=30, ha="right", fontsize=8)
+    ax.set_xticklabels([MODEL_LABEL[m] for m in MODELS], rotation=35, ha="right", fontsize=7)
     ax.set_yticks(range(len(SCEN)))
-    ax.set_yticklabels([SCEN_LABEL[s] for s in SCEN], fontsize=8)
+    ax.set_yticklabels([SCEN_LABEL[s] for s in SCEN], fontsize=7)
+    ax.tick_params(length=0)
     for i in range(len(SCEN)):
         for j in range(len(MODELS)):
             v = data[i][j]
-            ax.text(j, i, f"{v:.1f}", ha="center", va="center", fontsize=8,
+            ax.text(j, i, f"{v:.1f}", ha="center", va="center", fontsize=7,
                     color="white" if v < 0.5 else "black")
-    cb = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.02)
-    cb.set_label("Attack success rate (guardrails off)", fontsize=8)
     fig.savefig(path)
     plt.close(fig)
     return path
@@ -96,6 +96,7 @@ def make_dose_response(full_factorial_path, out_dir):
     mean over the open models. Pooled over scenarios and control combinations."""
     import matplotlib
     matplotlib.use("Agg")
+    matplotlib.rcParams["pdf.fonttype"] = 42  # embed TrueType, not Type 3 (IEEE PDF eXpress)
     import matplotlib.pyplot as plt
     from collections import defaultdict
 
@@ -116,7 +117,7 @@ def make_dose_response(full_factorial_path, out_dir):
 
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "dose-response.pdf")
-    fig, ax = plt.subplots(figsize=(4.6, 2.9), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(3.5, 2.3), constrained_layout=True)
     ax.plot(ks, y_stub, "o-", color=_ORANGE, label="worst-case stub")
     ax.plot(ks, y_real, "s-", color=_BLUE, label="open models (mean)")
     ax.set_xlabel("Number of controls enabled")
@@ -138,6 +139,7 @@ def make_overhead(overhead_path, out_dir):
     gateway's control path is negligible next to model inference (seconds)."""
     import matplotlib
     matplotlib.use("Agg")
+    matplotlib.rcParams["pdf.fonttype"] = 42  # embed TrueType, not Type 3 (IEEE PDF eXpress)
     import matplotlib.pyplot as plt
 
     recs = [json.loads(l) for l in open(overhead_path) if l.strip()]
@@ -152,7 +154,7 @@ def make_overhead(overhead_path, out_dir):
 
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "overhead.pdf")
-    fig, ax = plt.subplots(figsize=(4.6, 2.6), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(3.5, 2.0), constrained_layout=True)
     y = range(len(labels))
     ax.barh(list(y), vals, color=_BLUE, height=0.62)
     ax.set_yticks(list(y))
@@ -174,32 +176,35 @@ def make_baseline_grid(llamaguard_path, nemo_path, out_dir):
     1 = attack blocked/flagged, 0 = missed. Gateway secure-mode ASR is 0 on all."""
     import matplotlib
     matplotlib.use("Agg")
+    matplotlib.rcParams["pdf.fonttype"] = 42  # embed TrueType, not Type 3 (IEEE PDF eXpress)
     import matplotlib.pyplot as plt
 
     lg = {r["scenario"]: r for r in (json.loads(l) for l in open(llamaguard_path) if l.strip())}
     nemo = {r["scenario"]: r for r in (json.loads(l) for l in open(nemo_path) if l.strip())}
     scen = SCEN
     rows = [
-        ("Gateway (secure)", [1] * len(scen)),
-        ("Llama Guard (input)", [1 if lg[s]["input_flagged"] == "unsafe" else 0 for s in scen]),
-        ("Llama Guard (output)", [1 if lg[s]["output_flagged"] == "unsafe" else 0 for s in scen]),
-        ("NeMo Guardrails", [1 if nemo[s]["blocked"] else 0 for s in scen]),
+        ("Gateway", [1] * len(scen)),
+        ("LlamaGuard in", [1 if lg[s]["input_flagged"] == "unsafe" else 0 for s in scen]),
+        ("LlamaGuard out", [1 if lg[s]["output_flagged"] == "unsafe" else 0 for s in scen]),
+        ("NeMo", [1 if nemo[s]["blocked"] else 0 for s in scen]),
     ]
     data = [r[1] for r in rows]
 
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "baseline-grid.pdf")
-    fig, ax = plt.subplots(figsize=(5.4, 2.2), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(3.5, 1.7), constrained_layout=True)
     ax.imshow(data, cmap="cividis", vmin=0, vmax=1, aspect="auto")
     ax.set_xticks(range(len(scen)))
-    ax.set_xticklabels(scen, fontsize=8)
+    ax.set_xticklabels(scen, fontsize=7)
     ax.set_yticks(range(len(rows)))
-    ax.set_yticklabels([r[0] for r in rows], fontsize=8)
+    ax.set_yticklabels([r[0] for r in rows], fontsize=7)
+    ax.tick_params(length=0)
     for i in range(len(rows)):
         for j in range(len(scen)):
             v = data[i][j]
-            ax.text(j, i, "block" if v else "miss", ha="center", va="center",
-                    fontsize=8, fontweight="bold", color="black" if v else "white")
+            word = ("held" if i == 0 else "flag") if v else "miss"
+            ax.text(j, i, word, ha="center", va="center",
+                    fontsize=6.5, fontweight="bold", color="black" if v else "white")
     fig.savefig(path)
     plt.close(fig)
     return path
